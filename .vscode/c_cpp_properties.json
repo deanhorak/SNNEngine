@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/local/BerkeleyDB.18.1/include",
+                "/usr/include"
+            ],
+            "defines": [
+                "HAVE_CXX_STDHEADERS"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerArgs": [
+                "-DHAVE_CXX_STDHEADERS"
+            ],
+            "compilerPath": "/usr/bin/g++"
+        }
+    ],
+    "version": 4
+}

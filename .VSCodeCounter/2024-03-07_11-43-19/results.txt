@@ -1,0 +1,110 @@
+Date : 2024-03-07 11:43:19
+Directory : /home/dean/SNNEngine/src
+Total : 81 files,  22378 codes, 9486 comments, 4219 blanks, all 36083 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| C++                |         78 |     22,309 |      9,485 |      4,202 |     35,996 |
+| Makefile           |          1 |         37 |          0 |         16 |         53 |
+| JSON with Comments |          1 |         31 |          0 |          0 |         31 |
+| Shell Script       |          1 |          1 |          1 |          1 |          3 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                       | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                          |         81 |     22,378 |      9,486 |      4,219 |     36,083 |
+| . (Files)                                                  |         80 |      9,645 |      1,560 |      2,002 |     13,207 |
+| nlohmann                                                   |          1 |     12,733 |      7,926 |      2,217 |     22,876 |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                   | language           | code       | comment    | blank      | total      |
++------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| /home/dean/SNNEngine/src/ActionPotential.cpp               | C++                |         49 |        108 |          8 |        165 |
+| /home/dean/SNNEngine/src/ActionPotential.h                 | C++                |         16 |         24 |          4 |         44 |
+| /home/dean/SNNEngine/src/Axon.cpp                          | C++                |        119 |         52 |         30 |        201 |
+| /home/dean/SNNEngine/src/Axon.h                            | C++                |         38 |         18 |         11 |         67 |
+| /home/dean/SNNEngine/src/Brain.cpp                         | C++                |        426 |         62 |        100 |        588 |
+| /home/dean/SNNEngine/src/Brain.h                           | C++                |         49 |         12 |         11 |         72 |
+| /home/dean/SNNEngine/src/BrainDemo.cpp                     | C++                |        300 |         35 |         64 |        399 |
+| /home/dean/SNNEngine/src/BrainDemo.h                       | C++                |         14 |          0 |          2 |         16 |
+| /home/dean/SNNEngine/src/BrainDemo1.cpp                    | C++                |        109 |         72 |         17 |        198 |
+| /home/dean/SNNEngine/src/BrainDemo1.h                      | C++                |          9 |          0 |          2 |         11 |
+| /home/dean/SNNEngine/src/BrainDemo2.cpp                    | C++                |        199 |         20 |         39 |        258 |
+| /home/dean/SNNEngine/src/BrainDemo2.h                      | C++                |          9 |          0 |          2 |         11 |
+| /home/dean/SNNEngine/src/BrainDemo3.cpp                    | C++                |      1,371 |         34 |        165 |      1,570 |
+| /home/dean/SNNEngine/src/BrainDemo3.h                      | C++                |          9 |          0 |          3 |         12 |
+| /home/dean/SNNEngine/src/BrainDemo4.cpp                    | C++                |      1,398 |         33 |        182 |      1,613 |
+| /home/dean/SNNEngine/src/BrainDemo4.h                      | C++                |          9 |          0 |          3 |         12 |
+| /home/dean/SNNEngine/src/BrainDemo5.cpp                    | C++                |        176 |         12 |         41 |        229 |
+| /home/dean/SNNEngine/src/BrainDemo5.h                      | C++                |          9 |          0 |          3 |         12 |
+| /home/dean/SNNEngine/src/BrainDemo6.cpp                    | C++                |        178 |         12 |         42 |        232 |
+| /home/dean/SNNEngine/src/BrainDemo6.h                      | C++                |          9 |          0 |          3 |         12 |
+| /home/dean/SNNEngine/src/BrainDemoHWRecognition.cpp        | C++                |        235 |         18 |         52 |        305 |
+| /home/dean/SNNEngine/src/BrainDemoHWRecognition.h          | C++                |         10 |          0 |          2 |         12 |
+| /home/dean/SNNEngine/src/BrainDemoSimple.cpp               | C++                |        279 |         84 |         65 |        428 |
+| /home/dean/SNNEngine/src/BrainDemoSimple.h                 | C++                |         14 |          0 |          2 |         16 |
+| /home/dean/SNNEngine/src/CachedComponent.h                 | C++                |         14 |          0 |          5 |         19 |
+| /home/dean/SNNEngine/src/Cluster.cpp                       | C++                |        131 |         35 |         40 |        206 |
+| /home/dean/SNNEngine/src/Cluster.h                         | C++                |         34 |         11 |         12 |         57 |
+| /home/dean/SNNEngine/src/CollectionIterator.h              | C++                |         37 |          0 |          5 |         42 |
+| /home/dean/SNNEngine/src/Column.cpp                        | C++                |        133 |         44 |         40 |        217 |
+| /home/dean/SNNEngine/src/Column.h                          | C++                |         37 |         11 |         10 |         58 |
+| /home/dean/SNNEngine/src/ColumnNeuronProfile.cpp           | C++                |         15 |          0 |          3 |         18 |
+| /home/dean/SNNEngine/src/ColumnNeuronProfile.h             | C++                |         10 |          0 |          3 |         13 |
+| /home/dean/SNNEngine/src/ComponentCollection.h             | C++                |         79 |          4 |         14 |         97 |
+| /home/dean/SNNEngine/src/ComponentDB.h                     | C++                |        480 |         65 |        109 |        654 |
+| /home/dean/SNNEngine/src/Dendrite.cpp                      | C++                |        109 |         47 |         39 |        195 |
+| /home/dean/SNNEngine/src/Dendrite.h                        | C++                |         37 |         11 |          6 |         54 |
+| /home/dean/SNNEngine/src/Encoder.cpp                       | C++                |         95 |         14 |          7 |        116 |
+| /home/dean/SNNEngine/src/Encoder.h                         | C++                |         12 |          0 |          2 |         14 |
+| /home/dean/SNNEngine/src/Event.cpp                         | C++                |          9 |          0 |          3 |         12 |
+| /home/dean/SNNEngine/src/Event.h                           | C++                |         10 |          0 |          2 |         12 |
+| /home/dean/SNNEngine/src/Global.cpp                        | C++                |        746 |        160 |        195 |      1,101 |
+| /home/dean/SNNEngine/src/Global.h                          | C++                |        159 |         53 |         58 |        270 |
+| /home/dean/SNNEngine/src/Layer.cpp                         | C++                |        124 |         23 |         29 |        176 |
+| /home/dean/SNNEngine/src/Layer.h                           | C++                |         33 |         11 |          9 |         53 |
+| /home/dean/SNNEngine/src/Location3D.h                      | C++                |         15 |          0 |          5 |         20 |
+| /home/dean/SNNEngine/src/Makefile                          | Makefile           |         37 |          0 |         16 |         53 |
+| /home/dean/SNNEngine/src/NNComponent.cpp                   | C++                |         24 |          3 |          9 |         36 |
+| /home/dean/SNNEngine/src/NNComponent.h                     | C++                |         36 |          4 |         13 |         53 |
+| /home/dean/SNNEngine/src/Neuron.cpp                        | C++                |        420 |        149 |         88 |        657 |
+| /home/dean/SNNEngine/src/Neuron.h                          | C++                |         93 |         21 |         17 |        131 |
+| /home/dean/SNNEngine/src/NeuronMorphology.cpp              | C++                |         10 |          0 |          3 |         13 |
+| /home/dean/SNNEngine/src/NeuronMorphology.h                | C++                |         11 |          0 |          3 |         14 |
+| /home/dean/SNNEngine/src/Nucleus.cpp                       | C++                |        210 |         28 |         49 |        287 |
+| /home/dean/SNNEngine/src/Nucleus.h                         | C++                |         41 |         11 |         14 |         66 |
+| /home/dean/SNNEngine/src/ParseJSON.cpp                     | C++                |         59 |          5 |         12 |         76 |
+| /home/dean/SNNEngine/src/ParseJSON.h                       | C++                |          6 |          0 |          4 |         10 |
+| /home/dean/SNNEngine/src/Process.cpp                       | C++                |          9 |          0 |          3 |         12 |
+| /home/dean/SNNEngine/src/Process.h                         | C++                |         21 |          0 |          3 |         24 |
+| /home/dean/SNNEngine/src/Region.cpp                        | C++                |        160 |         26 |         46 |        232 |
+| /home/dean/SNNEngine/src/Region.h                          | C++                |         39 |         12 |         13 |         64 |
+| /home/dean/SNNEngine/src/SNNEngine.cpp                     | C++                |        231 |         15 |         52 |        298 |
+| /home/dean/SNNEngine/src/SNNEngineWorkspace.code-workspace | JSON with Comments |         31 |          0 |          0 |         31 |
+| /home/dean/SNNEngine/src/Serialize.cpp                     | C++                |          8 |         27 |          3 |         38 |
+| /home/dean/SNNEngine/src/Server.cpp                        | C++                |        540 |        104 |        107 |        751 |
+| /home/dean/SNNEngine/src/Server.h                          | C++                |         51 |         10 |         12 |         73 |
+| /home/dean/SNNEngine/src/SimpleNN.cpp                      | C++                |          4 |          2 |          3 |          9 |
+| /home/dean/SNNEngine/src/Size3D.h                          | C++                |         15 |          0 |          5 |         20 |
+| /home/dean/SNNEngine/src/SpatialDetails.cpp                | C++                |          7 |          3 |          3 |         13 |
+| /home/dean/SNNEngine/src/SpatialDetails.h                  | C++                |         20 |          1 |          7 |         28 |
+| /home/dean/SNNEngine/src/Synapse.cpp                       | C++                |         89 |         24 |         28 |        141 |
+| /home/dean/SNNEngine/src/Synapse.h                         | C++                |         42 |         11 |         10 |         63 |
+| /home/dean/SNNEngine/src/TR1Random.cpp                     | C++                |         15 |          0 |          4 |         19 |
+| /home/dean/SNNEngine/src/TR1Random.h                       | C++                |         14 |          0 |          2 |         16 |
+| /home/dean/SNNEngine/src/TimedEvent.cpp                    | C++                |         19 |          0 |          4 |         23 |
+| /home/dean/SNNEngine/src/TimedEvent.h                      | C++                |         15 |          0 |          3 |         18 |
+| /home/dean/SNNEngine/src/Tuple.h                           | C++                |          7 |          0 |          2 |          9 |
+| /home/dean/SNNEngine/src/domake.sh                         | Shell Script       |          1 |          1 |          1 |          3 |
+| /home/dean/SNNEngine/src/nlohmann/json.hpp                 | C++                |     12,733 |      7,926 |      2,217 |     22,876 |
+| /home/dean/SNNEngine/src/stdafx.cpp                        | C++                |          1 |          5 |          3 |          9 |
+| /home/dean/SNNEngine/src/stdafx.h                          | C++                |          2 |          7 |          7 |         16 |
+| /home/dean/SNNEngine/src/targetver.h                       | C++                |          4 |          6 |          4 |         14 |
+| Total                                                      |                    |     22,378 |      9,486 |      4,219 |     36,083 |
++------------------------------------------------------------+--------------------+------------+------------+------------+------------+
