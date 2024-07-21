@@ -10,7 +10,7 @@
  * of the license agreement you entered into with Dean S Horak.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are not permitted
- * without express written permission from Your Name.
+ * without express written permission from Dean S Horak.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
  * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
