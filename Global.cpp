@@ -138,10 +138,6 @@ void Global::increment(void)
 
 long Global::nextComponent(ComponentType type)
 {
-	if (type == 3)
-	{
-		int test = 3;
-	}
 	return componentCounter[type]++;
 }
 
@@ -455,7 +451,7 @@ void Global::runInference(void)
 	
 	std::vector<TimedEvent *> *teVector = &globalObject->timeIntervalEvents[intervalOffsetValue];
 
-	int tevSize = (int)teVector->size();
+	size_t tevSize = (int)teVector->size();
 
 	if (tevSize > 0)
 	{
@@ -463,9 +459,9 @@ void Global::runInference(void)
 		// We now have a vector of a nonzero number of events to process.
 		if (tevSize > THREADPOOL_SLICE_THRESHOLD)
 		{ // process in slices if it exceeds threshold
-			int sizeper = tevSize / MAX_THREADPOOL_SIZE;
+			size_t sizeper = tevSize / (size_t)MAX_THREADPOOL_SIZE;
 
-			for (int n = 0; n < MAX_THREADPOOL_SIZE; ++n)
+			for (size_t n = 0; n < (size_t)MAX_THREADPOOL_SIZE; ++n)
 			{
 				size_t per = sizeper;
 				size_t startper = n * sizeper;
@@ -496,7 +492,7 @@ void Global::runLearning(void)
 	long learningWindowSize = 100L;
 
 	long learningInterval = current_timestep  - learningWindowSize;
-	long learningIntervalOffsetValue = learningInterval % MAX_TIMEINTERVAL_BUFFER_SIZE;
+	//long learningIntervalOffsetValue = learningInterval % MAX_TIMEINTERVAL_BUFFER_SIZE;
 
 	std::pair<std::vector<Neuron *> *, std::vector<Neuron *> *> *neurons = getNeurons(learningInterval, learningWindowSize); // Get Neurons firing  within 10 ms
 	std::vector<Neuron *> *preNeurons = neurons->first;
@@ -517,7 +513,7 @@ void Global::runLearning(void)
 	{
 		long thisNeuronId = neuronIndex;
 		Neuron *thisNeuron = globalObject->neuronDB.getComponent(thisNeuronId);
-		if(thisNeuron->lastfired > (learningInterval - learningWindowSize) ) // pick up all activity of windowsize before and after this learningInterval
+		if(thisNeuron->lastfired > (unsigned long)(learningInterval - learningWindowSize) ) // pick up all activity of windowsize before and after this learningInterval
 		{
 			thisNeuron->applySTDP(neurons,learningInterval);
 			affectedNeurons.push_back(thisNeuron);
@@ -529,7 +525,7 @@ void Global::runLearning(void)
 	if(nCount>0)
 	{
 		float totalPotential = 0;
-		for(long i = 0; i < nCount; i++)
+		for(size_t i = 0; i < nCount; i++)
 		{
 			Neuron *thisNeuron = affectedNeurons[i];
 			totalPotential += thisNeuron->potential;
@@ -539,7 +535,7 @@ void Global::runLearning(void)
 		float mean = totalPotential / (float)nCount;
 
 		// now, subtract the mean from all potentials
-		for(long i = 0; i < nCount; i++)
+		for(size_t i = 0; i < nCount; i++)
 		{
 			Neuron *thisNeuron = affectedNeurons[i];
 			thisNeuron->potential -= mean;
@@ -555,6 +551,8 @@ void Global::runLearning(void)
 
 void Global::inferenceSlice(std::vector<TimedEvent *> *teVector, size_t start, size_t count, bool display, size_t intervalOffsetValue)
 {
+	(void)display;
+	(void)intervalOffsetValue;
 
 	for (size_t i = start; i < start + count; i++)
 	{
@@ -876,8 +874,8 @@ std::pair<std::vector<Neuron *> *, std::vector<Neuron *> *> *Global::getNeurons(
 {
 	std::vector<Neuron *> *preNeurons = new std::vector<Neuron *>();
 	std::vector<Neuron *> *postNeurons = new std::vector<Neuron *>();
-	int beginning_timestamp = now - interval;
-	int ending_timestamp = now + interval;
+	unsigned long beginning_timestamp = now - interval;
+	//unsigned long ending_timestamp = now + interval;
 
 	long neuronStart = globalObject->componentBase[ComponentTypeNeuron];
 	long neuronEnd = globalObject->componentCounter[ComponentTypeNeuron];
@@ -886,11 +884,11 @@ std::pair<std::vector<Neuron *> *, std::vector<Neuron *> *> *Global::getNeurons(
 		Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
 		if(neuron->lastfired > beginning_timestamp)
 		{
-			if (neuron->lastfired <= now && neuron->lastfired >= beginning_timestamp) // Treat same interval the same as pre interval
+			if (neuron->lastfired <= (unsigned long) now && neuron->lastfired >= beginning_timestamp) // Treat same interval the same as pre interval
 			{
 				preNeurons->push_back(neuron);
 			}
-			else if (neuron->lastfired > now)
+			else if (neuron->lastfired > (unsigned long) now)
 			{
 				postNeurons->push_back(neuron);
 			}

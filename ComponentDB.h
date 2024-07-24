@@ -28,7 +28,8 @@
 #include <boost/multi_index/member.hpp>
 #include <string>
 #include <typeinfo>
-//#include "Global.h"
+
+#include "GlobalBridge.h"
 #include "CachedComponent.h"
 #include "Neuron.h"
 #include "Axon.h"
@@ -47,10 +48,6 @@ using namespace boost::multi_index;
 
 struct id{};
 struct referenceTimestamp{};
-
-class Global;
-
-extern Global *globalObject;
 
 template <class a_Type> class ComponentDB
 {
@@ -118,7 +115,7 @@ public:
 			std::cerr << e.what() << std::endl;
 		}
 
-		buffer = (char *)globalObject->allocClearedMemory(USER_BUFFER_SIZE);
+		buffer = GlobalBridge::allocClearedMemory(USER_BUFFER_SIZE);
 		if(buffer==NULL)
 		{
 			std::cout << "Unable to allocate working buffer! Press <enter> to continue." << std::endl;
@@ -128,13 +125,13 @@ public:
 
 	}
 
-	~ComponentDB(void) { globalObject->freeMemory(buffer); close(); }
+	~ComponentDB(void) { GlobalBridge::freeMemory(buffer); close(); }
 
 	inline Db &getDb() { return db_; }
 
 	void insert(a_Type *component)
 	{
-		if (!globalObject->componentKeyInRange(component->id))
+		if (!GlobalBridge::componentKeyInRange(component->id))
 		{
 			std::cerr << "insert():Error item: " << std::hex << component->id << "(" << std::dec << component->id << ") not found in " << dbFileName_ << " for insert().\n";
 			return;
@@ -183,15 +180,13 @@ public:
 		std::cerr << "Loading: " << typeidName << " ...." << std::endl;
 
 		typeidName = "ComponentType" + typeidName;
-		size_t index = globalObject->getTypeIndex(typeidName);
-		long base = globalObject->componentBase[index];
-		long end = globalObject->componentCounter[index];
-		if(base == 300000000) { // Nuclei
-			long test = end;
-		}
+		size_t index = GlobalBridge::getTypeIndex(typeidName);
+		long base = GlobalBridge::getComponentBase(index);
+		long end = GlobalBridge::getComponentCounter(index);
+
 		for (long i = base; i < end; i++)
 		{ 
-			a_Type *component = getComponent(i); // this should cause the object to load
+			getComponent(i); // this should cause the object to load
 		}
 		std::cerr << (end - base) << " " << typeidName << " items loaded." << std::endl;
 	}
@@ -199,7 +194,7 @@ public:
 	void addToCache(a_Type *component)
 	{
 
-		if (!globalObject->componentKeyInRange(component->id))
+		if (!GlobalBridge::componentKeyInRange(component->id))
 		{
 			std::cerr << "addToCache():Error item: " << std::hex << component->id << "(" << std::dec << component->id << ")  not found in " << dbFileName_ << " for addToCache().\n";
 			return;
@@ -371,7 +366,7 @@ public:
 	{
 //		boost::mutex::scoped_lock  amx(db_mutex);
 
-		if (!globalObject->componentKeyInRange(component->id))
+		if (!GlobalBridge::componentKeyInRange(component->id))
 		{
 			std::cerr << "save():Error item: " << std::hex << component->id << "(" << std::dec << component->id << ") not found in " << dbFileName_ << " for save().\n";
 			return;
@@ -420,7 +415,7 @@ public:
 			{
 				component->setDirty(false);
 			}
-			globalObject->freeMemory(dataPointer);
+			GlobalBridge::freeMemory(dataPointer);
 			delete tuple;
 		} catch (DbException &ex) {
 			std::cout << "DB Exception encountered: " << ex.what() << " !!! " << std::endl;
@@ -508,7 +503,7 @@ public:
 
 		a_Type* object = NULL;
 
-		if(!globalObject->componentKeyInRange(key))
+		if(!GlobalBridge::componentKeyInRange(key))
 		{
 			std::cerr << "getDBComponent(1):Error item: " << std::hex << key << "(" << std::dec << key << ") not found in " << dbFileName_ << " in getDBComponent()\n";
 			return object;
@@ -542,7 +537,7 @@ public:
 			//				printf("getComponent found key %d in database\n",key);
 			reimage_count++;
 			u_int32_t len = dat.get_ulen();
-			char *data = dat.get_data();
+			char *data = (char *)dat.get_data();
 			object = a_Type::instantiate(key, len, data);
 			object->setDirty(false);
 			/*
@@ -561,7 +556,7 @@ public:
 
 		a_Type* object = NULL;
 
-		if(!globalObject->componentKeyInRange(key))
+		if(!GlobalBridge::componentKeyInRange(key))
 		{
 			std::cerr << "getDBComponent(1):Error item: " << std::hex << key << "(" << std::dec << key << ") not found in " << dbFileName_ << " in getDBComponent()\n";
 			return object;
@@ -622,7 +617,7 @@ public:
 	{
 		a_Type* object = NULL;
 
-		if (!globalObject->componentKeyInRange(key))
+		if (!GlobalBridge::componentKeyInRange(key))
 		{
 			std::cerr << "getComponent():Error item: " << std::hex << key << "(" << std::dec << key << ") not found in " << dbFileName_ << " or cache.\n";
 			return object;
@@ -650,13 +645,13 @@ public:
 	void flush(void)
 	{
 		std::stringstream ss;
-		long itemId = 0;
+		
 
 		// Flush any dirty objects in cache
 //		for (typename std::map<long,CachedComponent<a_Type> *>::iterator itCache = cache.begin(); itCache != cache.end(); ++itCache)
 //		{
 		for (const auto& pair : cache) {
-			itemId = pair.first;
+			//long itemId = pair.first;
 			CachedComponent<a_Type> *item = pair.second;
 			if(item->component->isDirty())
 			{
@@ -666,8 +661,6 @@ public:
 
 		db_.sync(0);
 
-	//	LOGSTREAM(ss) << "flush():Last item of flush:  " << itemId  << std::endl;
-	//	globalObject->log(ss);
 	}
 
 	void flushAll(void)
@@ -675,7 +668,7 @@ public:
 		// Flush any dirty objects in cache
 		std::stringstream ss;
 		LOGSTREAM(ss) << "Flushall for  " << dbFileName_ << " beginning..." << std::endl;
-		globalObject->log(ss);
+		GlobalBridge::log(ss);
 
 		size_t sz = cache.size();
 		size_t ix = 0;
@@ -700,10 +693,10 @@ public:
 		db_.sync(0);
 
 		LOGSTREAM(ss) << "Flushall():Last item of flush:  " << itemId  << std::endl;
-		globalObject->log(ss);
+		GlobalBridge::log(ss);
 
 		LOGSTREAM(ss) << "Flushall for  " << dbFileName_ << " Complete." << std::endl;
-		globalObject->log(ss);
+		GlobalBridge::log(ss);
 	}
 
 	void shutdown(void)
@@ -732,7 +725,7 @@ public:
 //		}
 		std::string typeidName(lastToken(typeid(a_Type).name()));
 		LOGSTREAM(ss) << "shutdown(): Last " << typeidName << " item in cache to flush:  " << itemId << std::endl;
-		globalObject->log(ss);
+		GlobalBridge::log(ss);
 
 	}
 

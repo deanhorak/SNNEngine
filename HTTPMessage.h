@@ -113,6 +113,7 @@ class HttpMessageInterface {
     SetContentLength();
   }
   void ClearContent(const std::string& content) {
+    (void)content;
     content_.clear();
     SetContentLength();
   }

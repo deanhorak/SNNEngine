@@ -26,6 +26,7 @@
 Layer::Layer(unsigned long parentId):
 	NNComponent(ComponentTypeLayer)
 {
+	(void)parentId;
 }
 
 Layer::~Layer(void)
@@ -77,7 +78,7 @@ Layer *Layer::create(unsigned long parentId)
 }
 
 
-void Layer::projectTo(Layer *layer, float sparsity)
+void Layer::projectTo(Layer *layer, float sparsity, float polarity)
 {
 	std::stringstream ss;
 //	std::cout << " Connecting layer " << id << " ... " << std::endl;
@@ -91,7 +92,7 @@ void Layer::projectTo(Layer *layer, float sparsity)
 			Cluster *cTo = globalObject->clusterDB.getComponent(layer->clusters[j]);
 //			LOGSTREAM(ss) << "      Projecting cluster " << cFrom->id << " (" << cFrom->neurons.size() << " neurons) to  " << cTo->id << " (" << cTo->neurons.size() << " neurons)" << std::endl;
 //			globalObject->log(ss);
-			cFrom->projectTo(cTo, sparsity);
+			cFrom->projectTo(cTo, sparsity,polarity);
 		}
 	}
 }
@@ -133,6 +134,7 @@ void Layer::initializeRandom(unsigned long parentId)
 
 Layer *Layer::instantiate(long key, size_t len, void *data)
 {
+	(void)len;
 // 	size_t size = sizeof(float)+sizeof(float)+sizeof(long)+sizeof(long);
 	long clusterCount = 0;
 	Layer *layer = new Layer(0);
@@ -148,7 +150,7 @@ Layer *Layer::instantiate(long key, size_t len, void *data)
 	memcpy(&layer->area.d, ptr, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(&clusterCount,ptr,sizeof(clusterCount)); 	ptr+=sizeof(clusterCount);
 
-	for(size_t i=0;i<clusterCount;i++)
+	for(size_t i=0;i<(size_t)clusterCount;i++)
 	{
 		long cid = 0;
 		memcpy(&cid,ptr,sizeof(cid));
@@ -179,7 +181,7 @@ Tuple *Layer::getImage(void)
 	memcpy(ptr, &area.d, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(ptr,&clusterCount,sizeof(clusterCount)); 	ptr+=sizeof(clusterCount);
 
-	for(size_t i=0;i<clusterCount;i++)
+	for(size_t i=0;i<(size_t)clusterCount;i++)
 	{
 		long k = clusters[i];
 		memcpy(ptr,&k,sizeof(k));

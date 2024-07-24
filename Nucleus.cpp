@@ -100,15 +100,23 @@ void Nucleus::projectTo(Nucleus *nucleus, float sparsity)
 {
 	size_t cSize1 = columns.size();
 	size_t cSize2 = nucleus->columns.size();
-	size_t cMax = cSize1 * cSize2;
-	size_t cNumber = 0;
+	//size_t cMax = cSize1 * cSize2;
+	//size_t cNumber = 0;
 	std::stringstream ss;
 	for(size_t i=0;i<cSize1;i++)
 	{
-		Column *col1 = globalObject->columnDB.getComponent(columns[i]);
+		long c1id = columns[i];
+
+		Column *col1 = globalObject->columnDB.getComponent(c1id);
 		for(size_t j=0;j<cSize2;j++)
 		{
-			Column *col2 = globalObject->columnDB.getComponent(nucleus->columns[j]);
+			long c2id = nucleus->columns[j];
+
+			Column *col2 = NULL;
+			if(c1id == c2id) 
+				col2 = col1;
+			else
+				col2 = globalObject->columnDB.getComponent(c2id);
 //			size_t pct = (cNumber*100) / cMax;
 //			LOGSTREAM(ss) << "      Projecting Column " << col1->id << " to " << col2->id << "... (" << cNumber++ << " of " << cMax << " - " << pct << "%) " << std::endl;
 //			globalObject->log(ss);
@@ -137,22 +145,6 @@ void Nucleus::cycle(void)
 }
 
 
-void Nucleus::initializeRandom(void)
-{
-	
-	size_t rnd = (size_t) tr1random->generate(1,10); // Random # of Columns
-	for(size_t i=0;i<rnd;i++) 
-	{
-		SpatialDetails sd(this->location, this->area);
-		sd.randomizeLocation();
-
-		Column *c = Column::create(sd,this->id);
-		c->initializeRandom(this->id);
-		columns.push_back(c->id);
-	}
-	
-}
-
 Nucleus *Nucleus::instantiate(long key, size_t len, void *data)
 {
 
@@ -171,7 +163,7 @@ Nucleus *Nucleus::instantiate(long key, size_t len, void *data)
 	memcpy(&nucleus->area.d, ptr, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(&columnCount,ptr,sizeof(columnCount)); 	ptr+=sizeof(columnCount);
 
-	for(size_t i=0;i<columnCount;i++)
+	for(size_t i=0;i<(size_t)columnCount;i++)
 	{
 		long cid = 0;
 		memcpy(&cid,ptr,sizeof(cid));
@@ -217,7 +209,7 @@ Tuple *Nucleus::getImage(void)
 	memcpy(ptr, &area.d, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(ptr, &columnCount,sizeof(columnCount)); 	ptr+=sizeof(columnCount);
 
-	for(size_t i=0;i<columnCount;i++)
+	for(size_t i=0;i<(size_t)columnCount;i++)
 	{
 		long k = columns[i];
 		memcpy(ptr,&k,sizeof(k));
@@ -234,7 +226,7 @@ Tuple *Nucleus::getImage(void)
 
 	return tuple;
 }
-
+/*
 void Nucleus::addColumns(size_t colCount, size_t clusterCount, size_t neuronCount)
 {
 	for(size_t i=0;i<colCount;i++) 
@@ -268,6 +260,7 @@ void Nucleus::addColumns(size_t colCount, size_t clusterCount, size_t neuronCoun
 	}
 	setDirty(true);
 }
+*/
 
 void Nucleus::addColumns(size_t colCount, size_t layerCount, size_t clusterCount, size_t neuronCount)
 {
@@ -302,7 +295,7 @@ void Nucleus::addColumns(size_t colCount, size_t layerCount, size_t clusterCount
 	}
 	setDirty(true);
 }
-
+/*
 void Nucleus::addColumns(size_t colCount, ColumnNeuronProfile &cProfile)
 {
 	for(size_t i=0;i<colCount;i++) 
@@ -339,4 +332,4 @@ void Nucleus::addColumns(size_t colCount, ColumnNeuronProfile &cProfile)
 	}
 	setDirty(true);
 }
-
+*/

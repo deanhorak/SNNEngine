@@ -47,7 +47,7 @@ public:
 	static Brain *create(bool setToDirty=true);
 	static Brain *load(void);
 	static Brain *loadFromJSON(void);
-	void initializeRandom(void);
+//	void initializeRandom(void);
 	void shutdown(void);
 
 	static Brain *instantiate(long key, size_t len, void *data);

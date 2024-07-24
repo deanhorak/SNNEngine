@@ -60,9 +60,10 @@ Brain * BrainDemoTiny::create(bool rebuild)
 
 
 	// Create Thalamus
-	LOGSTREAM(ss) << "Create Micro Thalamus ... " << std::endl;
+	LOGSTREAM(ss) << "Create Thalamus region... " << std::endl;
 	globalObject->log(ss);
 
+	// Digits - 10 neurons
 	Region *regionThalamus = 0L;
 	if(brain->restartpoint())
 	{
@@ -90,7 +91,7 @@ Brain * BrainDemoTiny::create(bool rebuild)
 		regionThalamus->add(nucleusAnteroventral);
 //		nucleusAnteroventral->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 //		nucleusAnteroventral->addColumns(1,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
-		nucleusAnteroventral->addColumns(1,1,1,10); // 1 column, each with 2 layers, each with 1 clusters, each with 10 neurons
+		nucleusAnteroventral->addColumns(1,2,1,10); // 1 column, each with 2 layers, each with 1 clusters, each with 10 neurons
 	} 
 	else 
 	{
@@ -102,6 +103,7 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	LOGSTREAM(ss) << "Region " << regionThalamus->name << " complete with " << regionThalamus->nuclei.size() << " nuclei." << std::endl;
 	globalObject->log(ss);
 
+	// Images - 784 neurons
 	Region *regionVisualCortex = 0L;
 	if(brain->restartpoint())
 	{
@@ -133,71 +135,36 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	LOGSTREAM(ss) << "Region " << regionVisualCortex->name << " complete with " << regionVisualCortex->nuclei.size() << " nuclei." << std::endl;
 	globalObject->log(ss);
 
-
-	// Wrap up construction
-
-
-	LOGSTREAM(ss) << " Attaching layers within columns " << std::endl;
-	globalObject->log(ss);
-	// Now, attach layers within a column
-//	CollectionIterator<Column *> itColumn(Global::getColumnsCollection());
-
-	size_t columnCount = globalObject->columnsSize();
-	size_t columnNum = 0;
-
-	long columnIdStart = globalObject->componentBase[ComponentTypeColumn];
-	long columnIdEnd = globalObject->componentCounter[ComponentTypeColumn];
-
-	for (long columnIdIndex = columnIdStart;columnIdIndex<columnIdEnd;columnIdIndex++)
+	Region *regionAssociationCortex = 0L;
+	if(brain->restartpoint())
 	{
-		Column *column = globalObject->columnDB.getComponent(columnIdIndex);
-
-		size_t pct = (columnNum*100) / columnCount;
-		/*
-//		std::cout << " Initializing layers within column " << column->id << std::endl;
-		LOGSTREAM(ss) << " Initializing layers within column " << column->id << " - (" << ++columnNum << " of " << columnCount << " - " << pct << "%) " << std::endl;
-		globalObject->log(ss);
-
-		if(brain->restartpoint())
-		{
-			column->initializeLayers(0);
-		}
-		brain->syncpoint();
-		*/
-
+		regionAssociationCortex = Region::create("regionAssociationCortex", sd);
+		brain->add(regionAssociationCortex);
 	}
-	/*
-	LOGSTREAM(ss) << "Connecting columns " << std::endl;
-	globalObject->log(ss);
-
-	for (long columnIdIndex = columnIdStart;columnIdIndex<columnIdEnd;columnIdIndex++)
+	else
 	{
-		Column *column1 = globalObject->columnDB.getComponent(columnIdIndex);
-
-		for (long columnIdIndex2 = columnIdStart;columnIdIndex2<columnIdEnd;columnIdIndex2++)
-		{
-			if(columnIdIndex != columnIdIndex2) {
-
-				Column *column2 = globalObject->columnDB.getComponent(columnIdIndex2);
-
-				LOGSTREAM(ss) << " Connecting columns " << column1->id << " to " << column2->id << std::endl;
-				globalObject->log(ss);
-
-				column1->projectTo(column2);
-			}
-
-		}
+		long regionId = globalObject->componentBase[ComponentTypeRegion] + 1; 
+		regionAssociationCortex = globalObject->regionDB.getComponent(regionId);
 	}
-	*/
-	//LOGSTREAM(ss) << "Project nucleus " << lateralGeniculateNucleus->name << " to " << nucleusAnteroventral->name << std::endl;
-	//globalObject->log(ss);
+	brain->syncpoint();
 
-    //lateralGeniculateNucleus->projectTo(nucleusAnteroventral);
+	Nucleus *associationNucleus = 0L;
+	if(brain->restartpoint())
+	{
+		associationNucleus = Nucleus::create("AssociationNucleus", sd);
+		regionAssociationCortex->add(associationNucleus);
+//		LateralGeniculateNucleus->addColumns(1,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
+		associationNucleus->addColumns(1,1,1,784); // 1 column, each with 1 layers, each with 1 clusters, each with 784*8*10 neurons
+	}
+	else
+	{
+		long nucleusId = globalObject->componentBase[ComponentTypeNucleus] + 1; 
+		associationNucleus = globalObject->nucleusDB.getComponent(nucleusId);
+	} 
+	brain->syncpoint();
 
-	//LOGSTREAM(ss) << "Project nucleus " << nucleusAnteroventral->name << " to " << lateralGeniculateNucleus->name << std::endl;
-	//globalObject->log(ss);
-
-    //nucleusAnteroventral->projectTo(lateralGeniculateNucleus);
+	LOGSTREAM(ss) << "Region " << regionAssociationCortex->name << " complete with " << regionAssociationCortex->nuclei.size() << " nuclei." << std::endl;
+	globalObject->log(ss);
 
 	LOGSTREAM(ss) << std::endl << "... " << std::endl << std::endl;
 	globalObject->log(ss);
@@ -225,7 +192,15 @@ Brain * BrainDemoTiny::create(bool rebuild)
 
 
 
-	// Thamamus project to all other regions
+	// Thalamus project to all other regions
+	LOGSTREAM(ss) << "    regionVisualCortex->projectTo(regionThalamus)" << std::endl;
+	globalObject->log(ss);
+	if(brain->restartpoint())
+	{
+		regionVisualCortex->projectTo(regionThalamus,100.f);
+	}
+	brain->syncpoint();
+
 	LOGSTREAM(ss) << "    regionThalamus->projectTo(regionVisualCortex)" << std::endl;
 	globalObject->log(ss);
 	if(brain->restartpoint())
@@ -233,15 +208,31 @@ Brain * BrainDemoTiny::create(bool rebuild)
 		regionThalamus->projectTo(regionVisualCortex,100.f);
 	}
 	brain->syncpoint();
-/*
-	LOGSTREAM(ss) << "    regionVisualCortex->projectTo(regionThalamus)" << std::endl;
+
+	LOGSTREAM(ss) << "    regionThalamus->projectTo(regionAssociationCortex)" << std::endl;
 	globalObject->log(ss);
 	if(brain->restartpoint())
 	{
-		regionVisualCortex->projectTo(regionThalamus,50.f);
+		regionThalamus->projectTo(regionAssociationCortex,100.f);
 	}
 	brain->syncpoint();
-*/
+
+	LOGSTREAM(ss) << "    regionVisualCortex->projectTo(regionAssociationCortex)" << std::endl;
+	globalObject->log(ss);
+	if(brain->restartpoint())
+	{
+		regionVisualCortex->projectTo(regionAssociationCortex,100.f);
+	}
+	brain->syncpoint();
+
+	LOGSTREAM(ss) << "    regionAssociationCortex->projectTo(regionThalamus)" << std::endl;
+	globalObject->log(ss);
+	if(brain->restartpoint())
+	{
+		regionAssociationCortex->projectTo(regionThalamus,100.f);
+	}
+	brain->syncpoint();
+
 
 	LOGSTREAM(ss) << "------------------------------------------------------" << std::endl;
 	globalObject->log(ss);
@@ -349,7 +340,7 @@ void BrainDemoTiny::finalDendriteAdjustments(std::stringstream &ss)
 
 			long sourceNeuronId = thisSynapse->postSynapticNeuronId; //????
 			Neuron *sourceNeuron = globalObject->neuronDB.getComponent(sourceNeuronId);
-			neuron->connectFrom(sourceNeuron);
+			neuron->connectFrom(sourceNeuron,thisSynapse->polarity);
 		}
 	}
 
@@ -431,9 +422,9 @@ void BrainDemoTiny::finalAxonAdjustments(std::stringstream &ss)
 							if (neuX != NULL)												// Make sure it's valid
 							{
 								added++;
-								Dendrite* den = Dendrite::create(neuX,neu);		 		// Create a new dendrite
+								Dendrite* den = Dendrite::create(neuX,neu,-1.0);		 		// Create a new inhibitory dendrite 
                                 neuX->dendriteMap.insert(std::make_pair(neu->id, den->id));
-								Synapse* s = Synapse::create(den);					// Add a synapse to the dendrite
+								Synapse* s = Synapse::create(den,-1.0);					// Add a synapse to the dendrite -- inhibitory 
 								long sid = s->id;
 								ax->insertSynapse(sid);								// Attatch this new synapse to our axon
 							}
@@ -490,6 +481,7 @@ void BrainDemoTiny::finalAxonAdjustments(std::stringstream &ss)
 
 void BrainDemoTiny::step(Brain *brain)
 {
+	(void)brain;
 //	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 
@@ -513,22 +505,27 @@ std::string BrainDemoTiny::formatNumber(unsigned long long number) {
 
 // This kludge is to sprinkle synapses among the clusters within nucleus, and within the neurons within clusters
 void BrainDemoTiny::insertSynapses(Nucleus* nuc) {
-	for (long i = 0; i < nuc->columns.size(); i++) {
+	for (size_t i = 0; i < nuc->columns.size(); i++) {
 		long colId = nuc->columns[i];
 		Column* col = globalObject->columnDB.getComponent(colId);
-		for (long j = 0; j < col->layers.size(); j++) {
+		for (size_t j = 0; j < col->layers.size(); j++) {
 			long layerId = col->layers[j];
 			Layer *lay = globalObject->layerDB.getComponent(layerId);
-			for (long k = 0; k < lay->clusters.size(); k++) {
+			// If inputlayer, polarity is inhibitory, otherwise excitatory
+			float polarity = EXCITATORY;
+			if(j==(size_t)col->inputLayer)
+				polarity = EXCITATORY;
+
+			for (size_t k = 0; k < lay->clusters.size(); k++) {
 				long clusterId = lay->clusters[k];
 				Cluster* clu = globalObject->clusterDB.getComponent(clusterId);
-				for (long l = 0; l < clu->getNeurons().size(); l++) {
+				for (size_t l = 0; l < clu->getNeurons().size(); l++) {
 					long neuronId = clu->getNeurons()[l];
 					Neuron* neu = globalObject->neuronDB.getComponent(neuronId);
 					std::vector<long> *axons = neu->getAxons();
-					for (long m = 0; m < axons->size(); m++) {
-						long axonId = (*axons)[m];
-						Axon* axon = globalObject->axonDB.getComponent(axonId);
+					for (size_t m = 0; m < axons->size(); m++) {
+						//long axonId = (*axons)[m];
+						//Axon* axon = globalObject->axonDB.getComponent(axonId);
 						// We know have the axon which we will be attaching synapses to
 						// This is a place holder for a more sophisticated algorythm to assign synapses. Perhaps future models with 3D information loaded in (SpatialDetails)
 						// can place synapses where axons and dendrites come in close proximity
@@ -537,22 +534,23 @@ void BrainDemoTiny::insertSynapses(Nucleus* nuc) {
 						//
 						// Iterate over neurons in this cluster and associate X% of them, selected at random, with the dendrites of other neurons
 						// 
-						int percent = 95; // start with 98%
+						//int percent = 100; // start with 98%
 						//
-						boost::random::mt19937 gen;
+						//boost::random::mt19937 gen;
 
-						for (long ll = 0; ll < clu->getNeurons().size(); ll++) {
-							long neuronId2 = clu->getNeurons()[ll];
+						for (size_t ll = 0; ll < clu->getNeurons().size(); ll++) {
+							unsigned long neuronId2 = clu->getNeurons()[ll];
 							if (neuronId2 != neu->id) { // If not ourself
 								Neuron* neu2 = globalObject->neuronDB.getComponent(neuronId2);
-								boost::random::uniform_int_distribution<> dist(0, 100);
-								int value = dist(gen);
-								if (value <= percent) 
-								{
-									if(!neu->isConnectedTo(neu2)) {
-										neu->connectTo(neu2);
+								//boost::random::uniform_int_distribution<> dist(0, 100);
+								//int value = dist(percent);
+								//if (value <= percent) 
+								//{
+									if(!neu->isConnectedTo(neu2)) 
+									{
+										neu->connectTo(neu2,polarity);
 									}
-								}
+								//}
 							}
 
 						}
@@ -568,6 +566,8 @@ void BrainDemoTiny::insertSynapses(Nucleus* nuc) {
 // This kludge is to sprinkle synapses between nucleus's A and B
 void BrainDemoTiny::insertSynapses(Nucleus* nucA, Nucleus* nucB) {
 	// null for now
+	(void)nucA;
+	(void)nucB;
 }
 
 

@@ -88,7 +88,7 @@ Brain * BrainDemoHWRecognition::create(bool rebuild)
 		nucleusAnteroventral->nucleusType = SENSORY_NUCLEUS;
 		regionThalamus->add(nucleusAnteroventral);
 //		nucleusAnteroventral->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
-		nucleusAnteroventral->addColumns(1,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
+		nucleusAnteroventral->addColumns(1,6,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
 	} 
 	else 
 	{
@@ -118,7 +118,7 @@ Brain * BrainDemoHWRecognition::create(bool rebuild)
 	{
 		LateralGeniculateNucleus = Nucleus::create("LateralGeniculateNucleus", sd);
 		regionVisualCortex->add(LateralGeniculateNucleus);
-		LateralGeniculateNucleus->addColumns(1,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
+		LateralGeniculateNucleus->addColumns(1,6,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
 	}
 	else
 	{
@@ -139,17 +139,17 @@ Brain * BrainDemoHWRecognition::create(bool rebuild)
 	// Now, attach layers within a column
 //	CollectionIterator<Column *> itColumn(Global::getColumnsCollection());
 
-	size_t columnCount = globalObject->columnsSize();
-	size_t columnNum = 0;
+	//size_t columnCount = globalObject->columnsSize();
+	//size_t columnNum = 0;
 
 	long columnIdStart = globalObject->componentBase[ComponentTypeColumn];
 	long columnIdEnd = globalObject->componentCounter[ComponentTypeColumn];
 
 	for (long columnIdIndex = columnIdStart;columnIdIndex<columnIdEnd;columnIdIndex++)
 	{
-		Column *column = globalObject->columnDB.getComponent(columnIdIndex);
+		//Column *column = globalObject->columnDB.getComponent(columnIdIndex);
 
-		size_t pct = (columnNum*100) / columnCount;
+		//size_t pct = (columnNum*100) / columnCount;
 		/*
 //		std::cout << " Initializing layers within column " << column->id << std::endl;
 		LOGSTREAM(ss) << " Initializing layers within column " << column->id << " - (" << ++columnNum << " of " << columnCount << " - " << pct << "%) " << std::endl;
@@ -313,7 +313,7 @@ void BrainDemoHWRecognition::finalDendriteAdjustments(std::stringstream &ss)
 
 			long sourceNeuronId = thisSynapse->postSynapticNeuronId; //????
 			Neuron *sourceNeuron = globalObject->neuronDB.getComponent(sourceNeuronId);
-			neuron->connectFrom(sourceNeuron);
+			neuron->connectFrom(sourceNeuron,thisSynapse->polarity);
 		}
 	}
 
@@ -395,9 +395,9 @@ void BrainDemoHWRecognition::finalAxonAdjustments(std::stringstream &ss)
 							if (neuX != NULL)												// Make sure it's valid
 							{
 								added++;
-								Dendrite* den = Dendrite::create(neuX,neu);				// Create a new dendrite
+								Dendrite* den = Dendrite::create(neuX,neu,-1.0);				// Create a new dendrite
                                 neuX->dendriteMap.insert(std::make_pair(neu->id, den->id));
-								Synapse* s = Synapse::create(den);					// Add a synapse to the dendrite
+								Synapse* s = Synapse::create(den,-1.0);					// Add a synapse to the dendrite
 								long sid = s->id;
 								ax->insertSynapse(sid);								// Attatch this new synapse to our axon
 							}
@@ -454,6 +454,7 @@ void BrainDemoHWRecognition::finalAxonAdjustments(std::stringstream &ss)
 
 void BrainDemoHWRecognition::step(Brain *brain)
 {
+	(void)brain;
 //	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 
@@ -477,22 +478,28 @@ std::string BrainDemoHWRecognition::formatNumber(unsigned long long number) {
 
 // This kludge is to sprinkle synapses among the clusters within nucleus, and within the neurons within clusters
 void BrainDemoHWRecognition::insertSynapses(Nucleus* nuc) {
-	for (long i = 0; i < nuc->columns.size(); i++) {
+	for (size_t i = 0; i < nuc->columns.size(); i++) {
 		long colId = nuc->columns[i];
 		Column* col = globalObject->columnDB.getComponent(colId);
-		for (long j = 0; j < col->layers.size(); j++) {
+		for (size_t j = 0; j < col->layers.size(); j++) {
 			long layerId = col->layers[j];
 			Layer *lay = globalObject->layerDB.getComponent(layerId);
-			for (long k = 0; k < lay->clusters.size(); k++) {
+
+			// If inputlayer, polarity is inhibitory, otherwise excitatory
+			float polarity = EXCITATORY;
+			if(j==(size_t)col->inputLayer)
+				polarity = EXCITATORY;
+
+			for (size_t k = 0; k < lay->clusters.size(); k++) {
 				long clusterId = lay->clusters[k];
 				Cluster* clu = globalObject->clusterDB.getComponent(clusterId);
-				for (long l = 0; l < clu->getNeurons().size(); l++) {
+				for (size_t l = 0; l < clu->getNeurons().size(); l++) {
 					long neuronId = clu->getNeurons()[l];
 					Neuron* neu = globalObject->neuronDB.getComponent(neuronId);
 					std::vector<long> *axons = neu->getAxons();
-					for (long m = 0; m < axons->size(); m++) {
-						long axonId = (*axons)[m];
-						Axon* axon = globalObject->axonDB.getComponent(axonId);
+					for (size_t m = 0; m < axons->size(); m++) {
+						//long axonId = (*axons)[m];
+						//Axon* axon = globalObject->axonDB.getComponent(axonId);
 						// We know have the axon which we will be attaching synapses to
 						// This is a place holder for a more sophisticated algorythm to assign synapses. Perhaps future models with 3D information loaded in (SpatialDetails)
 						// can place synapses where axons and dendrites come in close proximity
@@ -505,8 +512,8 @@ void BrainDemoHWRecognition::insertSynapses(Nucleus* nuc) {
 						//
 						boost::random::mt19937 gen;
 
-						for (long ll = 0; ll < clu->getNeurons().size(); ll++) {
-							long neuronId2 = clu->getNeurons()[ll];
+						for (size_t ll = 0; ll < clu->getNeurons().size(); ll++) {
+							unsigned long neuronId2 = clu->getNeurons()[ll];
 							if (neuronId2 != neu->id) { // If not ourself
 								Neuron* neu2 = globalObject->neuronDB.getComponent(neuronId2);
 								boost::random::uniform_int_distribution<> dist(0, 100);
@@ -514,7 +521,7 @@ void BrainDemoHWRecognition::insertSynapses(Nucleus* nuc) {
 								if (value <= percent) 
 								{
 									if(!neu->isConnectedTo(neu2)) {
-										neu->connectTo(neu2);
+										neu->connectTo(neu2,polarity);
 									}
 								}
 							}
@@ -532,6 +539,8 @@ void BrainDemoHWRecognition::insertSynapses(Nucleus* nuc) {
 // This kludge is to sprinkle synapses between nucleus's A and B
 void BrainDemoHWRecognition::insertSynapses(Nucleus* nucA, Nucleus* nucB) {
 	// null for now
+	(void)nucA;
+	(void)nucB;
 }
 
 

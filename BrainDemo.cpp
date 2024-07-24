@@ -102,7 +102,7 @@ Brain* BrainDemo::create(bool rebuild)
 	{
 		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral", sdAnteroventral, SENSORY_NUCLEUS);
 		regionThalamus->add(nucleusAnteroventral);
-		nucleusAnteroventral->addColumns(2, profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		nucleusAnteroventral->addColumns(2, 6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 		insertSynapses(nucleusAnteroventral);
 	}
 	else
@@ -135,7 +135,7 @@ Brain* BrainDemo::create(bool rebuild)
 	{
 		nucleusStriatum = Nucleus::create("nucleusStriatum", sdStriatum);
 		regionBasalGanglia->add(nucleusStriatum);
-		nucleusStriatum->addColumns(2, profile);
+		nucleusStriatum->addColumns(2, 6,5,10);
 		insertSynapses(nucleusStriatum);
 	}
 	else
@@ -241,7 +241,7 @@ void BrainDemo::finalAdjustments(std::stringstream& ss)
 	unsigned long zeroCount = 0;
 	long axBegin = globalObject->componentBase[ComponentTypeAxon];
 	long axEnd = globalObject->componentCounter[ComponentTypeAxon];
-	for (size_t axId = axBegin;axId<axEnd;axBegin++)
+	for (size_t axId = (size_t)axBegin;axId<(size_t)axEnd;axBegin++)
 	{
 		Axon* ax = globalObject->axonDB.getComponent(axId);
 		if (ax->getSynapses()->size() == 0)
@@ -263,7 +263,7 @@ void BrainDemo::finalAdjustments(std::stringstream& ss)
 		//	for (itAxon.begin(); itAxon.more(); itAxon.next())
 		size_t axonCount = globalObject->axonDB.size();
 
-		for (size_t axId = axBegin;axId<axEnd;axBegin++)
+		for (size_t axId = (size_t)axBegin;axId<(size_t)axEnd;axBegin++)
 
 		{
 			Axon* ax = globalObject->axonDB.getComponent(axId);
@@ -287,9 +287,9 @@ void BrainDemo::finalAdjustments(std::stringstream& ss)
 							if (neuX != NULL)												// Make sure it's valid
 							{
 								added++;
-								Dendrite* den = Dendrite::create(neuX, neu);				// Create a new dendrite
+								Dendrite* den = Dendrite::create(neuX, neu,-1.0);				// Create a new dendrite
                                 neuX->dendriteMap.insert(std::make_pair(neu->id, den->id));
-								Synapse* s = Synapse::create(den);					// Add a synapse to the dendrite
+								Synapse* s = Synapse::create(den,-1.0);					// Add a synapse to the dendrite
 								long sid = s->id;
 								ax->insertSynapse(sid);								// Attatch this new synapse to our axon
 							}
@@ -342,6 +342,7 @@ void BrainDemo::finalAdjustments(std::stringstream& ss)
 
 void BrainDemo::step(Brain* brain)
 {
+	(void)brain;
 	//	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 
@@ -365,22 +366,28 @@ std::string BrainDemo::formatNumber(unsigned long long number) {
 
 // This kludge is to sprinkle synapses among the clusters within nucleus, and within the neurons within clusters
 void BrainDemo::insertSynapses(Nucleus* nuc) {
-	for (long i = 0; i < nuc->columns.size(); i++) {
+	for (size_t i = 0; i < nuc->columns.size(); i++) {
 		long colId = nuc->columns[i];
 		Column* col = globalObject->columnDB.getComponent(colId);
-		for (long j = 0; j < col->layers.size(); j++) {
+		for (size_t j = 0; j < col->layers.size(); j++) {
 			long layerId = col->layers[j];
 			Layer* lay = globalObject->layerDB.getComponent(layerId);
-			for (long k = 0; k < lay->clusters.size(); k++) {
+
+			// If inputlayer, polarity is inhibitory, otherwise excitatory
+			float polarity = EXCITATORY;
+			if(j==(size_t)col->inputLayer)
+				polarity = EXCITATORY;
+
+			for (size_t k = 0; k < lay->clusters.size(); k++) {
 				long clusterId = lay->clusters[k];
 				Cluster* clu = globalObject->clusterDB.getComponent(clusterId);
-				for (long l = 0; l < clu->getNeurons().size(); l++) {
+				for (size_t l = 0; l < clu->getNeurons().size(); l++) {
 					long neuronId = clu->getNeurons()[l];
 					Neuron* neu = globalObject->neuronDB.getComponent(neuronId);
 					std::vector<long>* axons = neu->getAxons();
-					for (long m = 0; m < axons->size(); m++) {
-						long axonId = (*axons)[m];
-						Axon* axon = globalObject->axonDB.getComponent(axonId);
+					for (size_t m = 0; m < axons->size(); m++) {
+						//long axonId = (*axons)[m];
+						//Axon* axon = globalObject->axonDB.getComponent(axonId);
 						// We know have the axon which we will be attaching synapses to
 						// This is a place holder for a more sophisticated algorythm to assign synapses. Perhaps future models with 3D information loaded in (SpatialDetails)
 						// can place synapses where axons and dendrites come in close proximity
@@ -393,8 +400,8 @@ void BrainDemo::insertSynapses(Nucleus* nuc) {
 						//
 						boost::random::mt19937 gen;
 
-						for (long ll = 0; ll < clu->getNeurons().size(); ll++) {
-							long neuronId2 = clu->getNeurons()[ll];
+						for (size_t ll = 0; ll < clu->getNeurons().size(); ll++) {
+							unsigned long neuronId2 = (unsigned long )clu->getNeurons()[ll];
 							if (neuronId2 != neu->id) { // If not ourself
 								Neuron* neu2 = globalObject->neuronDB.getComponent(neuronId2);
 								boost::random::uniform_int_distribution<> dist(0, 100);
@@ -402,7 +409,7 @@ void BrainDemo::insertSynapses(Nucleus* nuc) {
 								if (value <= percent)
 								{
 									if (!neu->isConnectedTo(neu2)) {
-										neu->connectTo(neu2);
+										neu->connectTo(neu2,polarity);
 									}
 								}
 							}
@@ -419,5 +426,7 @@ void BrainDemo::insertSynapses(Nucleus* nuc) {
 
 // This kludge is to sprinkle synapses between nucleus's A and B
 void BrainDemo::insertSynapses(Nucleus* nucA, Nucleus* nucB) {
+	(void)nucA;
+	(void)nucB;
 	// null for now
 }

@@ -44,6 +44,7 @@ Brain* ParseJSON::loadFromJSON(void)
     // define parser callback
     json::parser_callback_t cb = [](int depth, json::parse_event_t event, json& parsed)
     {
+        (void)depth;
         // skip object elements with key "Thumbnail"
         // Start with Brain level object
         int level = 0;

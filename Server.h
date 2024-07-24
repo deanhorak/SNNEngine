@@ -51,7 +51,7 @@ public:
 	static std::vector<long> getNeurons(std::string lookupNucleusName, LayerType layerType);
 	static std::vector<long> getNeurons(std::string lookupNucleusName, int layerNumber);
 	void setActivationBytes(unsigned char *bitstring, unsigned char *data, size_t length);
-	unsigned char Server::getActivationStatus(long neuronId);
+	unsigned char getActivationStatus(long neuronId);
 
 	bool keepRunning;
 	//

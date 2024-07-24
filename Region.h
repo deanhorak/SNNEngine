@@ -55,7 +55,7 @@ public:
 	virtual ~Region(void);
 //	static Region *create(std::string name, bool setToDirty=true);
 	static Region* create(std::string name, SpatialDetails details, bool setToDirty = true);
-	void initializeRandom(void);
+	//void initializeRandom(void);
 
 	static Region *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);

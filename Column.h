@@ -43,7 +43,7 @@ class Column: public NNComponent
 	}
 public:
 	virtual ~Column(void);
-	static Column *create(SpatialDetails details, unsigned long parentId);
+//	static Column *create(SpatialDetails details, unsigned long parentId);
 	static Column *create(SpatialDetails details, size_t layerCount, unsigned long parentId);
 	void initializeRandom(unsigned long parentId);
 //	void initializeLayers(unsigned long parentId);

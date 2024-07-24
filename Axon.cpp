@@ -30,7 +30,7 @@ Axon::Axon(Neuron *neuron) : Process(ComponentTypeAxon)
 {
 	if (neuron->id == 0)
 	{
-		printf("%i", neuron->id);
+		printf("%ld", neuron->id);
 	}
 
 	this->neuronId = neuron->id;
@@ -80,7 +80,7 @@ Axon *Axon::create(Neuron *neuron)
 
 	if (neuron->id == 0)
 	{
-		printf("%i", neuron->id);
+		printf("%ld", neuron->id);
 	}
 
 	Axon *a = new Axon(neuron);
@@ -187,7 +187,8 @@ long Axon::fire(void)
 			if(lowestOffset > offset) lowestOffset = offset;
 			// std::cout << "Axon Offset " << offset << std::endl;
 			long timeslice = globalObject->current_timestep + offset;
-			TimedEvent *te = TimedEvent::create(timeslice, thisDendrite, thisSynapse->id);
+			
+			TimedEvent::create(timeslice, thisDendrite, thisSynapse->id);
 
 			if(globalObject->logEvents) 
 			{		
@@ -255,7 +256,7 @@ Tuple *Axon::getImage(void)
 	}
 	else
 	{
-		for (size_t i = 0; i < synapseCount; i++)
+		for (size_t i = 0; i < (size_t)synapseCount; i++)
 		{
 			long k = synapses[i];
 			memcpy(ptr, &k, sizeof(k));
@@ -272,6 +273,7 @@ Tuple *Axon::getImage(void)
 Axon *Axon::instantiate(long key, size_t len, void *data)
 {
 
+	(void)len; 
 	long lclsynapseCount = 0;
 	long lclneuronId = 0;
 	long lclpId = 0;
@@ -308,7 +310,7 @@ Axon *Axon::instantiate(long key, size_t len, void *data)
 	}
 	else
 	{
-		for (size_t i = 0; i < lclsynapseCount; i++)
+		for (size_t i = 0; i < (size_t)lclsynapseCount; i++)
 		{
 			long thisKey;
 			memcpy(&thisKey, ptr, sizeof(long));

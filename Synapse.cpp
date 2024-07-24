@@ -33,7 +33,7 @@ extern float RATE_GRADATION;
 
 Synapse::Synapse(Dendrite *dendrite) : NNComponent(ComponentTypeSynapse)
 {
-	size_t rnd = (size_t)tr1random->generate(1, 1000); // Random # between one and 1000
+	//size_t rnd = (size_t)tr1random->generate(1, 1000); // Random # between one and 1000
 //	if (rnd <= 100)									   // if random number == 5 (.1%) the set weight to 1
 //	{
 		//		std::cout << "Synapse " << id << " randomly primed with a weight of 1"  << std::endl;
@@ -82,12 +82,13 @@ void Synapse::commit(void)
 	globalObject->synapseDB.addToCache(this);
 }
 
-Synapse *Synapse::create(Dendrite *dendrite)
+Synapse *Synapse::create(Dendrite *dendrite, float polar)
 {
 	Synapse *s = new Synapse(dendrite);
 	s->id = globalObject->nextComponent(ComponentTypeSynapse);
 	s->position = dendrite->getDistance();
 	s->postSynapticNeuronId = dendrite->getPreSynapticNeuronId();
+	s->polarity = polar;
 	globalObject->insert(s);
 	return s;
 }
@@ -97,7 +98,7 @@ float Synapse::sumweights(Neuron *neuron)
 	float sum = 0;
 	std::vector<long> *dendrites = neuron->getDendrites();
 	long numDendrites = (*dendrites).size();
-	for(size_t i=0;i < numDendrites;i++)
+	for(size_t i=0;i < (size_t)numDendrites;i++)
 	{
 		long dId = (*dendrites)[i];
 		Dendrite *d = globalObject->dendriteDB.getComponent(dId);
@@ -175,7 +176,7 @@ Tuple *Synapse::getImage(void)
 		float position;
 	*/
 
-	size_t size = sizeof(owningDendriteId) + sizeof(postSynapticNeuronId) + sizeof(weight) + sizeof(weightUpdateCounter) + sizeof(position);
+	size_t size = sizeof(owningDendriteId) + sizeof(postSynapticNeuronId) + sizeof(weight) + sizeof(polarity) + sizeof(weightUpdateCounter) + sizeof(position);
 
 	char *image = globalObject->allocClearedMemory(size);
 	char *ptr = (char *)image;
@@ -188,6 +189,9 @@ Tuple *Synapse::getImage(void)
 
 	memcpy(ptr, &weight, sizeof(weight));
 	ptr += sizeof(weight);
+
+	memcpy(ptr, &polarity, sizeof(polarity));
+	ptr += sizeof(polarity);
 
 	memcpy(ptr, &weightUpdateCounter, sizeof(weightUpdateCounter));
 	ptr += sizeof(weightUpdateCounter);
@@ -204,6 +208,7 @@ Tuple *Synapse::getImage(void)
 
 Synapse *Synapse::instantiate(long key, size_t len, void *data)
 {
+	(void)len;
 	// 	u_int32_t size = sizeof(long)+sizeof(float)+sizeof(float);
 
 	Synapse *synapse = new Synapse();
@@ -218,6 +223,9 @@ Synapse *Synapse::instantiate(long key, size_t len, void *data)
 
 	memcpy(&synapse->weight, ptr, sizeof(synapse->weight));
 	ptr += sizeof(synapse->weight);
+
+	memcpy(&synapse->polarity, ptr, sizeof(synapse->polarity));
+	ptr += sizeof(synapse->polarity);
 
 	memcpy(&synapse->weightUpdateCounter, ptr, sizeof(synapse->weightUpdateCounter));
 	ptr += sizeof(synapse->weightUpdateCounter);

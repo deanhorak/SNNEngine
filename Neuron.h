@@ -65,10 +65,10 @@ public:
 	static Neuron*recreate(void);
 	void initializeRandom(void);
 	bool isAssociated(long synapseId);
-	void connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron);
-	void connectTo(Neuron *targetNeuron);
-	void connectFrom(Neuron *sourceNeuron);
-	void projectTo(Neuron *targetNeuron);
+	void connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron, float polarity);
+	void connectTo(Neuron *targetNeuron, float polarity);
+	void connectFrom(Neuron *sourceNeuron, float polarity);
+	void projectTo(Neuron *targetNeuron, float polarity);
 	void cycle(void);
 	bool isConnectedTo(Neuron *neuron);
 	void applySTDP(ActionPotential *ap, std::pair<std::vector<Tuple*>*, std::vector<Tuple*>* >*slices);
@@ -81,7 +81,7 @@ public:
 
 	long getCurrentTimestep(void);
 
-	bool Neuron::containsDendrite(long did);
+	bool containsDendrite(long did);
 
 	bool isFiring(float delay = 0);
 	inline bool hasFired(void) { return latch; };

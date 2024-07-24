@@ -23,7 +23,7 @@
 #include "Global.h"
 #include "Neuron.h"
 
-Dendrite::Dendrite(Neuron *neuron):
+Dendrite::Dendrite(Neuron *neuron, float polarity):
 	Process(ComponentTypeDendrite)
 {
 
@@ -31,19 +31,19 @@ Dendrite::Dendrite(Neuron *neuron):
 	setRate(DEFAULT_DENDRITE_RATE);
 	setDistance(10.0);
 
-	Synapse *s = Synapse::create(this);
+	Synapse *s = Synapse::create(this,polarity);
 	this->synapseId = s->id;
 	s->setOwningDendriteId(this->id);
 }
 
-Dendrite::Dendrite(Neuron *neuron, long newId):
+Dendrite::Dendrite(Neuron *neuron, long newId, float polarity):
 	Process(ComponentTypeDendrite)
 {
 	setPreSynapticNeuronId(neuron->id);
 	setRate(DEFAULT_DENDRITE_RATE);
 	setDistance(10.0);
 
-	Synapse *s = Synapse::create(this);
+	Synapse *s = Synapse::create(this,polarity);
 	this->synapseId = s->id;
 	s->setOwningDendriteId(newId);
 	neuron->setDirty();
@@ -75,11 +75,11 @@ void Dendrite::commit(void)
 }
 
 
-Dendrite *Dendrite::create(Neuron *postSynapticNeuron, Neuron *preSynapticNeuron)
+Dendrite *Dendrite::create(Neuron *postSynapticNeuron, Neuron *preSynapticNeuron, float polarity)
 {
 
 	long newId = globalObject->nextComponent(ComponentTypeDendrite);
-	Dendrite *d = new Dendrite(preSynapticNeuron, newId);
+	Dendrite *d = new Dendrite(preSynapticNeuron, newId,polarity);
 	d->id = newId;
 	d->setPostSynapticNeuronId(postSynapticNeuron->id);
 	d->setPreSynapticNeuronId(preSynapticNeuron->id);
@@ -109,7 +109,7 @@ void Dendrite::fire(void)
 			Axon *a = globalObject->axonDB.getComponent(ownerId);
 
 			// std::cout << "Dendrite Offset " << offset << std::endl;
-			TimedEvent *te = TimedEvent::create(globalObject->current_timestep + offset, a, s->id);
+			TimedEvent::create(globalObject->current_timestep + offset, a, s->id);
 		}
 		else 
 		{
@@ -155,7 +155,7 @@ Tuple *Dendrite::getImage(void)
 
 Dendrite *Dendrite::instantiate(long key, size_t len, void *data)
 {
-
+	(void)len;
 	Dendrite *dendrite = new Dendrite();
 	dendrite->id = key;
 

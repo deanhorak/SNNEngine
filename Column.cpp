@@ -94,6 +94,7 @@ void Column::commit(void)
 	globalObject->columnDB.addToCache(this);
 }
 
+/*
 Column *Column::create(SpatialDetails details, unsigned long parentId)
 {
 	Column *c = new Column(true,parentId);
@@ -130,6 +131,7 @@ Column *Column::create(SpatialDetails details, unsigned long parentId)
 
 	return c;
 }
+*/
 
 Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long parentId)
 {
@@ -300,7 +302,7 @@ void Column::projectTo(Column *targetColumn, float sparsity)
 		targetLayer[i] = globalObject->layerDB.getComponent(targetColumn->layers[i]); // layer 1;
 	}
 
-
+/*
 	for(int i=0;i<sourceLayerCount;i++)
 	{
 		for(int j=0;j<targetLayerCount;j++)
@@ -311,7 +313,28 @@ void Column::projectTo(Column *targetColumn, float sparsity)
 
 		}
 	}
+*/
 
+	int input = targetColumn->inputLayer - 1;
+	Layer *tLayer = targetLayer[input];
+
+	int output = this->outputLayer -1;
+	Layer *sLayer = sourceLayer[output];
+
+	if(input!=output) 
+	{
+		LOGSTREAM(ss) << "      Projecting neurons in source layer " << input << " to target layer " << output << std::endl;
+		globalObject->log(ss);
+		sLayer->projectTo(tLayer,sparsity,EXCITATORY); // excitatory
+
+		LOGSTREAM(ss) << "      Projecting neurons target layer " << output << " to source layer " << input << std::endl;
+		globalObject->log(ss);
+		sLayer->projectTo(tLayer,sparsity,EXCITATORY); 
+	}
+	else
+	{
+		LOGSTREAM(ss) << "      Source layer same as target layer, so no projections " << std::endl;
+	}
 }
 
 void Column::cycle(void)
@@ -327,11 +350,12 @@ void Column::cycle(void)
 
 void Column::initializeRandom(unsigned long parentId)
 {
-	
+	(void)parentId;	
 }
 
 Column *Column::instantiate(long key, size_t len, void *data)
 {
+	(void)len;
 	Column *column = new Column(false,0);
 	column->id = key;
 
@@ -340,7 +364,7 @@ Column *Column::instantiate(long key, size_t len, void *data)
 	long layerCount = 0;
 	memcpy(&layerCount,ptr,sizeof(layerCount)); 	ptr+=sizeof(layerCount);
 
-	for(size_t i=0;i<layerCount;i++)
+	for(size_t i=0;i<(size_t)layerCount;i++)
 	{
 		long lid = 0;
 		memcpy(&lid,ptr,sizeof(lid));
@@ -365,7 +389,7 @@ Tuple *Column::getImage(void)
 
 	memcpy(ptr,&layerCount,sizeof(layerCount)); ptr+=sizeof(layerCount);
 
-	for(size_t i=0;i<layerCount;i++)
+	for(size_t i=0;i<(size_t)layerCount;i++)
 	{
 		long k = layers[i];
 		memcpy(ptr,&k,sizeof(k));

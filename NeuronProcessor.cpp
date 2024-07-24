@@ -63,7 +63,7 @@ void NeuronProcessor::doWork(void)
         {
             if (thisNeuron->firing)
             { // If we are firing, check to see if refactory period is exceeded
-                if (globalObject->current_timestep - thisNeuron->lastfired > FIRING_WINDOW)
+                if ((long)(globalObject->current_timestep - thisNeuron->lastfired) > FIRING_WINDOW)
                 {
                     thisNeuron->setFiring(false);
                     thisNeuron->potential = RESTING_POTENTIAL;
@@ -115,6 +115,7 @@ int NeuronProcessor::waitThreadWorker(void)
     {
         doWork();
     }
+    return 0;
 }
 void NeuronProcessor::start(void)
 {

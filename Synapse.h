@@ -47,7 +47,7 @@ class Synapse: public NNComponent
 
 public:
 	virtual ~Synapse(void);
-	static Synapse *create(Dendrite *dendrite);
+	static Synapse *create(Dendrite *dendrite, float polar);
 	void receiveAP(ActionPotential *ap);
 	Tuple *getImage(void);
 	static Synapse *instantiate(long key, size_t len, void *data);
@@ -75,6 +75,7 @@ public:
 
 	unsigned long postSynapticNeuronId;
 
+	float polarity;
 
 private:
 

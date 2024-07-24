@@ -55,7 +55,6 @@ class Nucleus: public NNComponent
 public:
 	virtual ~Nucleus(void);
 	static Nucleus *create(std::string name, SpatialDetails details, int nucleusType= INTER_NUCLEUS, bool setToDirty=true);
-	void initializeRandom(void);
 
 	static Nucleus *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);
@@ -64,9 +63,9 @@ public:
 	void projectTo(Nucleus *nucleus, float sparsity=100.0f);
 	void cycle(void);
 
-	void addColumns(size_t colCount, size_t clusterCount, size_t neuronCount);
+//	void addColumns(size_t colCount, size_t clusterCount, size_t neuronCount);
 	void addColumns(size_t colCount, size_t layerCount, size_t clusterCount, size_t neuronCount);
-	void addColumns(size_t colCount, ColumnNeuronProfile &cProfile);
+//	void addColumns(size_t colCount, ColumnNeuronProfile &cProfile);
 
 	void toJSON(std::ofstream& outstream);
 
