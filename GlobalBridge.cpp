@@ -20,6 +20,7 @@
  */
 
 #include "Global.h"
+
 #include "GlobalBridge.h"
 
 extern Global *globalObject;
