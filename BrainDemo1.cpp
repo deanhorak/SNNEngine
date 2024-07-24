@@ -45,7 +45,7 @@ Brain * BrainDemo1::create(bool rebuild)
 	brain = Brain::create();
 
 
-	brain->initializeRandom();
+	//brain->initializeRandom();
 
 // Initial network created. 
 // Now, attach synapses to axons within clusters
@@ -61,7 +61,7 @@ Brain * BrainDemo1::create(bool rebuild)
 				if(i!=j)
 				{
 					Neuron *neuronB = globalObject->neuronDB.getComponent(cluster->getNeurons()[j]);
-					neuronA->connectTo(neuronB);
+					neuronA->connectTo(neuronB,-1.0);
 				}
 			}
 		}
@@ -98,59 +98,6 @@ Brain * BrainDemo1::create(bool rebuild)
 		}
 */
 	}
-/*
-	CollectionIterator<Layer *> itLayer(Global::getLayersCollection());
-	for (itLayer.begin(); itLayer.more(); itLayer.next())
-	{
-		Layer *layer = itLayer.value();
-		std::map<long,Cluster *>::iterator itCluster = layer->clusters.begin();
-		for (itCluster=layer->clusters.begin(); itCluster!=layer->clusters.end(); ++itCluster)
-		{
-			std::map<long,Cluster *>::iterator itCluster2 = layer->clusters.begin();
-			for (itCluster2=layer->clusters.begin(); itCluster2!=layer->clusters.end(); ++itCluster2)
-			{
-				if(itCluster->first != itCluster2->first)
-				{
-					itCluster->second->connectTo(itCluster2->second);
-				}
-			}
-		}
-	}
-
-// Now, attach layers within a column
-	for (globalObject->columnDB.begin(); globalObject->columnDB.more(); globalObject->columnDB.next())
-	{
-		Column *column = globalObject->columnDB.getValue();
-		column->initializeLayers(0);
-	}
-/*
-// Now, attach layers within a column
-	std::map<long,Column *>::iterator itColumn = globalObject->columns.begin();
-	for (itColumn=globalObject->columns.begin(); itColumn!=globalObject->columns.end(); ++itColumn)
-	{
-		Column *column = itColumn->second;
-		std::map<long,Layer *>::iterator itLayer = column->layers.begin();
-		Layer *layer1 = (itLayer++)->second;
-		Layer *layer2 = (itLayer++)->second;
-		Layer *layer3 = (itLayer++)->second;
-		Layer *layer4 = (itLayer++)->second;
-		Layer *layer5 = (itLayer++)->second;
-		Layer *layer6 = (itLayer)->second;
-		
-		// Layer 4 is input, layer 1 is output
-		// Layer 4 connects to layer 3 and 5
-		layer4->connectTo(layer3);
-		layer4->connectTo(layer5);
-		// Layer 5 connects to layer 2
-		layer5->connectTo(layer2);
-		// Layer 2 and 3 connects to layer 6
-		layer2->connectTo(layer6);
-		layer3->connectTo(layer6);
-		// Layer 6 connects to layer 1
-		layer6->connectTo(layer1);
-
-	}
-*/
 
 // Now, attach columns within a Nucleus
 
@@ -216,4 +163,5 @@ Brain * BrainDemo1::create(bool rebuild)
 
 void BrainDemo1::step(Brain *brain)
 {
+	(void)brain;
 }

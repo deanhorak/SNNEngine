@@ -210,10 +210,10 @@ void HttpServer::HandleEpollEvent(int epoll_fd, EventData *data,
     }
   } else {
     response = data;
-    ssize_t byte_count =
-        send(fd, response->buffer + response->cursor, response->length, 0);
-    if (byte_count >= 0) {
-      if (byte_count < response->length) {  // there are still bytes to write
+    ssize_t byte_count = send(fd, response->buffer + response->cursor, response->length, 0);
+
+    if (byte_count >= (ssize_t)0) {
+      if (byte_count < (ssize_t)response->length) {  // there are still bytes to write
         response->cursor += byte_count;
         response->length -= byte_count;
         control_epoll_event(epoll_fd, EPOLL_CTL_MOD, fd, EPOLLOUT, response);

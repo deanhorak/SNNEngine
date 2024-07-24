@@ -220,6 +220,7 @@ size_t min(size_t a, size_t b)
 
 std::string parseAndRespond(std::string content)
 {
+  (void)content;
   // get number of APs
 
   std::stringstream response;
@@ -254,7 +255,7 @@ std::string parseAndRespond(std::string content)
 std::string bitsToString(unsigned char *buffer, long numbits)
 {
   std::string result;
-  for (size_t index = 0; index < numbits; index++)
+  for (size_t index = 0; index < (size_t)numbits; index++)
   {
     size_t byteIndex = index / 8;
     size_t bitIndex = index % 8;
@@ -358,7 +359,7 @@ std::string parseAndRespondJSON(std::string content)
 
         std::vector<Neuron *> firingNeurons;
         // We now have the vector of neurons to update and the bit pattern to update them with
-        for (int i = 0; i < numbits; i++)
+        for (int i = 0; i < (int)numbits; i++)
         {
           int byteindex = i / 8;
           int bitindex = i % 8; // get the modulus
@@ -562,7 +563,7 @@ std::string parseAndRespondJSON(std::string content)
 //          std::cout << nucleus << " pattern: " << thispattern << std::endl;
 
           // We now have the vector of neurons to update and the bit pattern to update them with
-          for (int i = 0; i < numbits; i++)
+          for (int i = 0; i < (int)numbits; i++)
           {
             int byteindex = i / 8;
             int bitindex = i % 8; // get the modulus
@@ -605,13 +606,13 @@ std::string parseAndRespondJSON(std::string content)
               Dendrite *outDendrite = globalObject->findConnectingDendrite(out, in);
               if (outDendrite == NULL)
               {
-                out->connectFrom(in);
+                out->connectFrom(in,-1.0);
               }
 
               Dendrite *inDendrite = globalObject->findConnectingDendrite(in, out);
               if (inDendrite == NULL)
               {
-                out->connectTo(in);
+                out->connectTo(in,-1.0); // default to inhibitory
               }
             }
           }
@@ -977,6 +978,9 @@ float RATE_GRADATION = 10000.0f;
 
     return responseContent;
   }
+  
+  std::string emptyresponseContent; 
+  return emptyresponseContent;
 }
 
 std::string computeResponse(std::string content)
@@ -1008,6 +1012,7 @@ std::string computeStatus(std::string content)
 extern int main_process(Brain *brain)
 {
 
+  (void)brain;
   pid_t tid = syscall(SYS_gettid);
   std::cout << "httpServerMain.main_process thread is " << tid << std::endl;
 
@@ -1108,7 +1113,7 @@ std::string convertToBinaryString(unsigned char* data, size_t size)
 {
 	std::string returnString;
 
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < (int)size; i++) {
 		int byteindex = i / 8;
 		int bitindex = i % 8;
 

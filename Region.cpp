@@ -51,7 +51,7 @@ void Region::toJSON(std::ofstream& outstream)
 	std::string sep("");
 	outstream << "    { \"_type\": \"Region\", \"_name\": \"" << name << "\", \"id\": " << id << ", \"location\": [" << location.x  << ", " << location.y << ", " << location.z << "], \"size\": [" << area.h << ", " << area.w << ", " << area.d << "],  \"nuclei\": [ " << std::endl;
 	long nucsz = this->nuclei.size();
-	for (unsigned int i = 0; i < nuclei.size(); i++)
+	for (unsigned int i = 0; i < nucsz; i++)
 	{
 		outstream << sep;
 		sep = ",";
@@ -147,7 +147,7 @@ void Region::cycle(void)
 //	std::cout << "Region " << this->id << " cycled." << std::endl;
 
 }
-
+/*
 void Region::initializeRandom(void)
 {
 	size_t rnd = (size_t) tr1random->generate(1,2); // Random # of Nuclei
@@ -165,6 +165,7 @@ void Region::initializeRandom(void)
 	}
 
 }
+*/
 
 Region *Region::instantiate(long key, size_t len, void *data)
 {
@@ -187,7 +188,7 @@ Region *Region::instantiate(long key, size_t len, void *data)
 	memcpy(&region->area.d, ptr, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(&nucleiCount, ptr, sizeof(nucleiCount)); 	ptr +=sizeof(nucleiCount);
 
-	for(size_t i=0;i<nucleiCount;i++)
+	for(size_t i=0;i<(size_t)nucleiCount;i++)
 	{
 		long nid = 0;
 		memcpy(&nid,ptr,sizeof(nid));
@@ -231,7 +232,7 @@ Tuple *Region::getImage(void)
 	memcpy(ptr, &area.d, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(ptr,&nucleiCount,sizeof(nucleiCount)); 	ptr+=sizeof(nucleiCount);
 
-	for(size_t i=0;i<nucleiCount;i++)
+	for(size_t i=0;i<(size_t)nucleiCount;i++)
 	{
 		long k = nuclei[i];
 		memcpy(ptr,&k,sizeof(k));

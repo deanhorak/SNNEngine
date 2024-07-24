@@ -140,12 +140,12 @@ void Neuron::initializeRandom(void)
 // Note that sice the synapse always belongs to a dendrite, and the owner of the dendrite is always the postSynapticNeuron
 //
 
-void Neuron::connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron)
+void Neuron::connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron, float polarity)
 {
 	if(preSynapticNeuron->isConnectedTo(postSynapticNeuron))
 		return;
 
-	Dendrite *dendrite = Dendrite::create(postSynapticNeuron, preSynapticNeuron); // Create a dendrite and synapse and add to postSynapticNeuron collection
+	Dendrite *dendrite = Dendrite::create(postSynapticNeuron, preSynapticNeuron,polarity); // Create a dendrite and synapse and add to postSynapticNeuron collection
 
 	preSynapticNeuron->dendriteMap.insert(std::make_pair(postSynapticNeuron->id, dendrite->id));
 
@@ -168,26 +168,26 @@ void Neuron::connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron)
 
 // Connect TO a target neuron.
 // The presynaptic neuron will use it's axon to connect, via a synapse, with the dendrite of the postsynaptic neuron
-void Neuron::connectTo(Neuron *preSynapticNeuron)
+void Neuron::connectTo(Neuron *preSynapticNeuron, float polarity)
 {
 	Neuron *postSynapticNeuron = this; // Just to keep our head clear - the compiler will optimize this out
-	connect(preSynapticNeuron, postSynapticNeuron);
+	connect(preSynapticNeuron, postSynapticNeuron, polarity);
 }
 
 // Connect FROM a source neuron.
 // The connection is always via dendrite, meaning it's always to receive input
-void Neuron::connectFrom(Neuron *postSynapticNeuron)
+void Neuron::connectFrom(Neuron *postSynapticNeuron, float polarity)
 {
 	Neuron *preSynapticNeuron = this;
-	connect(preSynapticNeuron, postSynapticNeuron);
+	connect(preSynapticNeuron, postSynapticNeuron, polarity);
 }
 
 // Add synapses to the axons of this neuron.
 // each synapse is associated with a dendrite of the target neuron, and also contains this neuron as it's associated neuron
 // TODO: set the position of the synapse. Currently somewhat random
-void Neuron::projectTo(Neuron *targetNeuron)
+void Neuron::projectTo(Neuron *targetNeuron, float polarity)
 {
-	connectTo(targetNeuron);
+	connectTo(targetNeuron, polarity);
 }
 
 bool Neuron::isFromSensoryNucleus()
@@ -210,15 +210,7 @@ void Neuron::setFiring(bool value)
 
 		if (!isFromSensoryNucleus())
 		{
-			if (value)
-			{
-				unsigned long nucId = getNucleusId();
-				if (nucId != 0)
-				{
-					Nucleus *nuc = globalObject->nucleusDB.getComponent(nucId);
-				}
-			}
-			else
+			if (!value)
 			{
 				unsigned long nucId = getNucleusId();
 				if (nucId != 0)
@@ -252,7 +244,7 @@ long Neuron::fire(void)
 	{
 		std::vector<long> neurons = Server::getNeurons("nucleusAnteroventral", LayerType::output); // Layer 1 = input
 		std::stringstream ss;
-		for (int i = 0; i < neurons.size(); i++)
+		for (size_t i = 0; i < neurons.size(); i++)
 		{
 			long neuronId = neurons[i];
 			Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
@@ -269,7 +261,7 @@ long Neuron::fire(void)
 	{
 		// Get neurons in output layer
 		std::vector<long> neurons = Server::getNeurons("nucleusAnteroventral", LayerType::output); // Layer 1 = input
-		for (int i = 0; i < neurons.size(); i++)
+		for (size_t i = 0; i < neurons.size(); i++)
 		{
 			long neuronId = neurons[i];
 			Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
@@ -342,7 +334,7 @@ void Neuron::cycle(void)
 	}
 	else
 	{
-		if (globalObject->current_timestep - lastfired < FIRING_WINDOW )
+		if ((long)(globalObject->current_timestep - lastfired) < FIRING_WINDOW )
 		{
 			float ds = this->dendrites.size();
 			float oldPotential = potential;
@@ -479,9 +471,9 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 	size_t num_post_neurons = postNeurons->size();
 
 	double A_plus = DEFAULT_STDP_RATE;	// Amplitude of potentiation
-	double A_minus = DEFAULT_STDP_RATE; // Amplitude of depression
+	//double A_minus = DEFAULT_STDP_RATE; // Amplitude of depression
 	double tau_plus = 10.0;				// Time constant for potentiation
-	double tau_minus = 10.0;			// Time constant for depression
+	//double tau_minus = 10.0;			// Time constant for depression
 
 	if (num_pre_neurons == 0 && num_post_neurons == 0) // just return if no pre and post neurons firing
 	{
@@ -507,7 +499,7 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 
 				float distance = (float)(this->lastfired - lastTimeNeuronFired);
 				float delta = 0;
-				float prev = preDendrite->getRate();
+				//float prev = preDendrite->getRate();
 				long synapseId2 = preDendrite->getSynapseId();
 				Synapse *synapse2 = globalObject->synapseDB.getComponent(synapseId2);
 
@@ -536,6 +528,7 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 				}
 				double deltaT = (double)(learningInterval - lastTimeNeuronFired);
 				double weightChange = A_plus * std::exp(-deltaT / tau_plus);
+				weightChange *= synapse2->polarity;
 				float oldWeight = synapse2->getWeight();
 				float newWeight = oldWeight - (float)weightChange; // axonpreSynapseIdId strengthened (known as Long-Term Potentiation, LTP).
 				if(newWeight > MAXIMUM_SYNAPSE_WEIGHT)
@@ -595,6 +588,7 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 				}
 				double deltaT = (double)(lastTimeNeuronFired - learningInterval);
 				double weightChange = A_plus * std::exp(-deltaT / tau_plus);
+				weightChange *= synapse2->polarity;
 				float oldWeight = synapse2->getWeight();
 				float newWeight = oldWeight + (float)weightChange; // axonpreSynapseIdId weakened (known as Long-Term Depression, LTD).
 				if(newWeight > MAXIMUM_SYNAPSE_WEIGHT)
@@ -642,13 +636,13 @@ Tuple *Neuron::getImage(void)
 	memcpy(ptr, &dendriteCount, sizeof(dendriteCount));
 	ptr += sizeof(dendriteCount);
 
-	for (size_t i = 0; i < axonCount; i++)
+	for (size_t i = 0; i < (size_t)axonCount; i++)
 	{
 		processId = axons[i];
 		memcpy(ptr, &processId, sizeof(processId));
 		ptr += sizeof(processId);
 	}
-	for (size_t i = 0; i < dendriteCount; i++)
+	for (size_t i = 0; i < (size_t)dendriteCount; i++)
 	{
 		processId = dendrites[i];
 		memcpy(ptr, &processId, sizeof(processId));
@@ -664,14 +658,14 @@ Tuple *Neuron::getImage(void)
 
 Neuron *Neuron::instantiate(long key, size_t len, void *data)
 {
-
+	(void)len;
 	unsigned long defaultClusterId = ComponentType::ComponentTypeCluster;
 
 	long axonCount = 0;
 	long dendriteCount = 0;
 
-	size_t size = sizeof(nucleusType) + sizeof(parentId) + sizeof(neuronType) + sizeof(threshold) + sizeof(potential) +
-				  sizeof(location.x) + sizeof(location.y) + sizeof(location.z) + sizeof(axonCount) + sizeof(dendriteCount);
+	//size_t size = sizeof(nucleusType) + sizeof(parentId) + sizeof(neuronType) + sizeof(threshold) + sizeof(potential) +
+	//			  sizeof(location.x) + sizeof(location.y) + sizeof(location.z) + sizeof(axonCount) + sizeof(dendriteCount);
 
 	Neuron *neuron = new Neuron(defaultClusterId, INTER_NUCLEUS);
 	neuron->id = key;
@@ -698,14 +692,14 @@ Neuron *Neuron::instantiate(long key, size_t len, void *data)
 	memcpy(&dendriteCount, ptr, sizeof(dendriteCount));
 	ptr += sizeof(dendriteCount);
 
-	for (size_t i = 0; i < axonCount; i++)
+	for (size_t i = 0; i < (size_t)axonCount; i++)
 	{
 		long thisKey;
 		memcpy(&thisKey, ptr, sizeof(long));
 		ptr += sizeof(long);
 		neuron->axons.push_back(thisKey);
 	}
-	for (size_t i = 0; i < dendriteCount; i++)
+	for (size_t i = 0; i < (size_t)dendriteCount; i++)
 	{
 		long thisKey;
 		memcpy(&thisKey, ptr, sizeof(long));
@@ -730,26 +724,26 @@ std::string Neuron::getLocationOfNeuron(void)
 
 	// iterate through nuclei
 	// nucleus base=300000000
-	for (long nucidx = 0; nucidx < globalObject->nucleusDB.size(); nucidx++)
+	for (size_t nucidx = 0; nucidx < globalObject->nucleusDB.size(); nucidx++)
 	{
-		long nucid = globalObject->componentBase[ComponentTypeNucleus] + nucidx;
+		long nucid = (long)(globalObject->componentBase[ComponentTypeNucleus] + (unsigned long)nucidx);
 		Nucleus *nucleus = globalObject->nucleusDB.getComponent(nucid);
-		int columns = nucleus->columns.size();
-		for (int i = 0; i < columns; i++)
+		size_t columns = nucleus->columns.size();
+		for (size_t i = 0; i < columns; i++)
 		{
 			Column *column = globalObject->columnDB.getComponent(nucleus->columns[i]);
-			int layers = column->layers.size();
-			for (int j = 0; j < layers; j++)
+			size_t layers = column->layers.size();
+			for (size_t j = 0; j < layers; j++)
 			{
 				Layer *layer = globalObject->layerDB.getComponent(column->layers[j]);
-				int clusters = layer->clusters.size();
-				for (int k = 0; k < clusters; k++)
+				size_t clusters = layer->clusters.size();
+				for (size_t k = 0; k < clusters; k++)
 				{
 					Cluster *cluster = globalObject->clusterDB.getComponent(layer->clusters[k]);
-					int neurons = cluster->neurons.size();
-					for (int m = 0; m < neurons; m++)
+					size_t neurons = cluster->neurons.size();
+					for (size_t m = 0; m < neurons; m++)
 					{
-						if (cluster->neurons[m] == this->id) // if equal we found our neuron
+						if (cluster->neurons[m] == (long)this->id) // if equal we found our neuron
 						{
 							std::stringstream sss;
 

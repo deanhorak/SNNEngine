@@ -57,6 +57,7 @@ enum LayerType {input, output};
 
 //#include <vld.h>
 
+
 #include "NNComponent.h"
 #include "Brain.h"
 #include "Region.h"
@@ -101,6 +102,8 @@ enum LayerType {input, output};
 
 #define GROW_DENDRITES false
 
+#define EXCITATORY 1.0f
+#define INHIBITORY -1.0f
 
 
 #define LOGSTREAM(s) s.str(""); s.clear(); s 

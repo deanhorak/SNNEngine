@@ -78,7 +78,7 @@ Cluster *Cluster::create(SpatialDetails details, unsigned long parentId)
 }
 
 
-void Cluster::projectTo(Cluster *cluster, float sparsity)
+void Cluster::projectTo(Cluster *cluster, float sparsity, float polarity)
 {
 	Cluster *clusterA = this;
 	Cluster *clusterB = cluster;
@@ -96,7 +96,7 @@ void Cluster::projectTo(Cluster *cluster, float sparsity)
 		for(size_t j=0;j<bCount;j++)
 		{
 			Neuron *neuronB = globalObject->neuronDB.getComponent(clusterB->neurons[j]);
-			neuronA->projectTo(neuronB);
+			neuronA->projectTo(neuronB,polarity);
 		}
 	}
 }
@@ -130,7 +130,7 @@ void Cluster::initializeRandom(void)
 
 Cluster *Cluster::instantiate(long key, size_t len, void *data)
 {
-
+	(void)len;
 	long neuronCount = 0;
 	long nid = 0;
 
@@ -148,7 +148,7 @@ Cluster *Cluster::instantiate(long key, size_t len, void *data)
 	memcpy(&cluster->area.d, ptr, sizeof(area.d)); 			ptr += sizeof(area.d);
 	memcpy(&neuronCount,ptr,sizeof(neuronCount));				ptr+=sizeof(neuronCount);
 
-	for(size_t i=0;i<neuronCount;i++)
+	for(size_t i=0;i<(size_t)neuronCount;i++)
 	{
 		memcpy(&nid,ptr,sizeof(nid));
 		cluster->getNeurons().push_back(nid);
@@ -174,7 +174,7 @@ Tuple *Cluster::getImage(void)
 	memcpy(ptr, &area.d, sizeof(area.d)); 	ptr += sizeof(area.d);
 	memcpy(ptr,&neuronCount,sizeof(neuronCount)); 	ptr+=sizeof(neuronCount);
 
-	for(size_t i=0;i<neuronCount;i++)
+	for(size_t i=0;i<(size_t)neuronCount;i++)
 	{
 		long k = neurons[i];
 		memcpy(ptr,&k,sizeof(k));

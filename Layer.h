@@ -56,7 +56,7 @@ public:
 	Tuple *getImage(void);
 
 //	void connectTo(Layer *layer);
-	void projectTo(Layer *layer, float sparsity=100.0f);
+	void projectTo(Layer *layer, float sparsity=100.0f, float polarity=1.0);
 	void cycle(void);
 	void toJSON(std::ofstream& outstream);
 

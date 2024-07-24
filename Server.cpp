@@ -166,11 +166,14 @@ std::string Server::parseAndRespondJSON(char *buffer, int length)
 // Parse, process and reply using XML
 std::string Server::parseAndRespondXML(char *buffer, int length)
 {
+	(void)buffer;
+	(void)length;
 	return "";
 }
 
 std::string Server::parseAndRespondText(char *buffer, int length)
 {
+	(void)length;
 	std::stringstream ss;
 	// command parser
 	// format of recognized messages is 

@@ -81,7 +81,7 @@ Brain * BrainDemo6::create(bool rebuild)
 	{
 		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral", sd, SENSORY_NUCLEUS); // Sensory neurons
 		regionThalamus->add(nucleusAnteroventral);
-		nucleusAnteroventral->addColumns(10, profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		nucleusAnteroventral->addColumns(10,6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 	}
 	else
 	{
@@ -111,7 +111,7 @@ Brain * BrainDemo6::create(bool rebuild)
 	{
 		nucleusStriatum = Nucleus::create("nucleusStriatum", sd, INTER_NUCLEUS);
 		regionBasalGanglia->add(nucleusStriatum);
-		nucleusStriatum->addColumns(10, profile);
+		nucleusStriatum->addColumns(10,6,5,10);
 	}
 	else
 	{
@@ -238,6 +238,7 @@ Brain * BrainDemo6::create(bool rebuild)
 
 void BrainDemo6::step(Brain *brain)
 {
+	(void)brain;
 	//	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 /*

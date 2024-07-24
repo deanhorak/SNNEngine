@@ -47,7 +47,7 @@ void Encoder::post(Event *e)
 	}
 */
 	// We now know the number of neurons in this layer
-	int ePos = 0;
+	size_t ePos = 0;
 	for(size_t i=0;i<nucleus->columns.size();i++)
 	{
 		if(ePos<e->sampleSize) 
@@ -110,18 +110,18 @@ Event *Encoder::get(void)
 	int ePos = 0;
 	for(size_t i=0;i<nucleus->columns.size();i++)
 	{
-		if(ePos<e->sampleSize) 
+		if(ePos<(int)e->sampleSize) 
 		{
 			Column *col = globalObject->columnDB.getComponent(nucleus->columns[i]);
 			Layer *thisLayer = globalObject->layerDB.getComponent(col->layers[0]); // layer 1 is input
 			for(size_t j=0;j<thisLayer->clusters.size();j++) 
 			{
-				if(ePos<e->sampleSize) 
+				if(ePos<(int)e->sampleSize) 
 				{
 					Cluster *cls = globalObject->clusterDB.getComponent(thisLayer->clusters[j]);
 					for(size_t k=0;k<cls->getNeurons().size();k++)
 					{	
-						if(ePos<e->sampleSize) 
+						if(ePos<(int)e->sampleSize) 
 						{
 							Neuron *neuron = globalObject->neuronDB.getComponent(cls->getNeurons()[k]);
 							if(neuron->isFiring())

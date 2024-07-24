@@ -79,7 +79,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusAnteroventral);
-		nucleusAnteroventral->addColumns(10,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		nucleusAnteroventral->addColumns(10,6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 	} 
 	else 
 	{
@@ -93,7 +93,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusAnterodorsal = Nucleus::create("nucleusAnterodorsal",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusAnterodorsal);
-		nucleusAnterodorsal->addColumns(10,5,10); 
+		nucleusAnterodorsal->addColumns(10,6,5,10); 
 	} 
 	else 
 	{
@@ -107,7 +107,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusAnteromedial = Nucleus::create("nucleusAnteromedial",sd,SENSORY_NUCLEUS);
 		regionThalamus->add(nucleusAnteromedial);
-		nucleusAnteromedial->addColumns(10,5,10); 
+		nucleusAnteromedial->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -121,7 +121,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusSuperficial = Nucleus::create("nucleusSuperficial",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusSuperficial);
-		nucleusSuperficial->addColumns(10,5,10); 
+		nucleusSuperficial->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -135,7 +135,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusParvocellular = Nucleus::create("nucleusParvocellular",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusParvocellular);
-		nucleusParvocellular->addColumns(10,5,10); 
+		nucleusParvocellular->addColumns(10,6,5,10); 
 	} 
 	else
 	{
@@ -149,7 +149,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusMagnocellular = Nucleus::create("nucleusMagnocellular",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusMagnocellular);
-		nucleusMagnocellular->addColumns(10,5,10); 
+		nucleusMagnocellular->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -163,7 +163,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusParatenial = Nucleus::create("nucleusParatenial",sd,INTER_NUCLEUS);
 		regionThalamus->add(nucleusParatenial);
-		nucleusParatenial->addColumns(10,5,10); 
+		nucleusParatenial->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -177,7 +177,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusParventricular = Nucleus::create("nucleusParventricular",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusParventricular);
-		nucleusParventricular->addColumns(10,5,10); 
+		nucleusParventricular->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -191,7 +191,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusReuniens = Nucleus::create("nucleusReuniens",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusReuniens);
-		nucleusReuniens->addColumns(10,5,10); 
+		nucleusReuniens->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -205,7 +205,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusRhomboidal = Nucleus::create("nucleusRhomboidal",sd,INTER_NUCLEUS);
 		regionThalamus->add(nucleusRhomboidal);
-		nucleusRhomboidal->addColumns(10,5,10); 
+		nucleusRhomboidal->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -219,7 +219,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusParacentral = Nucleus::create("nucleusParacentral",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusParacentral);
-		nucleusParacentral->addColumns(10,5,10); 
+		nucleusParacentral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -233,7 +233,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusCentrallateral = Nucleus::create("nucleusCentrallateral",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusCentrallateral);
-		nucleusCentrallateral->addColumns(10,5,10); 
+		nucleusCentrallateral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -247,7 +247,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusCentralmedial = Nucleus::create("nucleusCentralmedial",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusCentralmedial);
-		nucleusCentralmedial->addColumns(10,5,10); 
+		nucleusCentralmedial->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -261,7 +261,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusCentromedian = Nucleus::create("nucleusCentromedian",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusCentromedian);
-		nucleusCentromedian->addColumns(10,5,10); 
+		nucleusCentromedian->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -275,7 +275,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusParafascicular = Nucleus::create("nucleusParafascicular",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusParafascicular);
-		nucleusParafascicular->addColumns(10,5,10); 
+		nucleusParafascicular->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -289,7 +289,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPulvinar = Nucleus::create("nucleusPulvinar",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusPulvinar);
-		nucleusPulvinar->addColumns(10,5,10); 
+		nucleusPulvinar->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -303,7 +303,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusLateralposterior = Nucleus::create("nucleusLateralposterior",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusLateralposterior);
-		nucleusLateralposterior->addColumns(10,5,10); 
+		nucleusLateralposterior->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -317,7 +317,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusLateraldorsal = Nucleus::create("nucleusLateraldorsal",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusLateraldorsal);
-		nucleusLateraldorsal->addColumns(10,5,10); 
+		nucleusLateraldorsal->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -331,7 +331,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVentralanterior = Nucleus::create("nucleusVentralanterior",sd,INTER_NUCLEUS);
 		regionThalamus->add(nucleusVentralanterior);
-		nucleusVentralanterior->addColumns(10,5,10); 
+		nucleusVentralanterior->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -345,7 +345,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVentrallateral = Nucleus::create("nucleusVentrallateral",sd,INTER_NUCLEUS);
 		regionThalamus->add(nucleusVentrallateral);
-		nucleusVentrallateral->addColumns(10,5,10); 
+		nucleusVentrallateral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -359,7 +359,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVentralposterior = Nucleus::create("nucleusVentralposterior",sd,INTER_NUCLEUS);
 		regionThalamus->add(nucleusVentralposterior);
-		nucleusVentralposterior->addColumns(10,5,10); 
+		nucleusVentralposterior->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -373,7 +373,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVentralposterolateral = Nucleus::create("nucleusVentralposterolateral",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusVentralposterolateral);
-		nucleusVentralposterolateral->addColumns(10,5,10); 
+		nucleusVentralposterolateral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -387,7 +387,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVentralposteromedial = Nucleus::create("nucleusVentralposteromedial",sd, INTER_NUCLEUS);
 		regionThalamus->add(nucleusVentralposteromedial);
-		nucleusVentralposteromedial->addColumns(10,5,10); 
+		nucleusVentralposteromedial->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -401,7 +401,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusMedialgeniculate = Nucleus::create("nucleusMedialgeniculate",sd);
 		regionThalamus->add(nucleusMedialgeniculate);
-		nucleusMedialgeniculate->addColumns(10,5,10); 
+		nucleusMedialgeniculate->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -415,7 +415,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusLateralgeniculate = Nucleus::create("nucleusLateralgeniculate",sd);
 		regionThalamus->add(nucleusLateralgeniculate);
-		nucleusLateralgeniculate->addColumns(10,5,10); 
+		nucleusLateralgeniculate->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -429,7 +429,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusThalamicreticular = Nucleus::create("nucleusThalamicreticular",sd);
 		regionThalamus->add(nucleusThalamicreticular);
-		nucleusThalamicreticular->addColumns(10,5,10); 
+		nucleusThalamicreticular->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -462,7 +462,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusStriatum = Nucleus::create("nucleusStriatum",sd);
 		regionBasalGanglia->add(nucleusStriatum);
-		nucleusStriatum->addColumns(10,5,10); 
+		nucleusStriatum->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -476,7 +476,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPallidum = Nucleus::create("nucleusPallidum", sd);
 		regionBasalGanglia->add(nucleusPallidum);
-		nucleusPallidum->addColumns(10,5,10); 
+		nucleusPallidum->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -490,7 +490,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusSubstantiaNigra = Nucleus::create("nucleusSubstantiaNigra", sd);
 		regionBasalGanglia->add(nucleusSubstantiaNigra);
-		nucleusSubstantiaNigra->addColumns(10,5,10); 
+		nucleusSubstantiaNigra->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -504,7 +504,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusSubthalamaic = Nucleus::create("nucleusSubthalamaic", sd);
 		regionBasalGanglia->add(nucleusSubthalamaic);
-		nucleusSubthalamaic->addColumns(10,5,10); 
+		nucleusSubthalamaic->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -537,7 +537,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusAuditory = Nucleus::create("nucleusAuditory", sd);
 		regionSensoryCortex->add(nucleusAuditory);
-		nucleusAuditory->addColumns(10,5,10); 
+		nucleusAuditory->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -551,7 +551,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusWernicke = Nucleus::create("nucleusWernicke", sd); // language intepretation
 		regionSensoryCortex->add(nucleusWernicke);
-		nucleusWernicke->addColumns(10,5,10); 
+		nucleusWernicke->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -565,7 +565,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVisual = Nucleus::create("nucleusVisual", sd);
 		regionSensoryCortex->add(nucleusVisual);
-		nucleusVisual->addColumns(10,5,10); 
+		nucleusVisual->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -597,7 +597,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusSoundProduction = Nucleus::create("nucleusSoundProduction", sd);
 		regionMotorCortex->add(nucleusSoundProduction);
-		nucleusSoundProduction->addColumns(10,5,10); 
+		nucleusSoundProduction->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -611,7 +611,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusBroca = Nucleus::create("nucleusBroca", sd); // language production
 		regionMotorCortex->add(nucleusBroca);
-		nucleusBroca->addColumns(10,5,10); 
+		nucleusBroca->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -625,7 +625,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVideo = Nucleus::create("nucleusVideo", sd); // visual output production
 		regionMotorCortex->add(nucleusVideo);
-		nucleusVideo->addColumns(10,5,10); 
+		nucleusVideo->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -656,7 +656,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCPosteriorDorsolateral = Nucleus::create("nucleusPFCPosteriorDorsolateral", sd);
 		regionPrefrontalCortex->add(nucleusPFCPosteriorDorsolateral);
-		nucleusPFCPosteriorDorsolateral->addColumns(10,5,10); 
+		nucleusPFCPosteriorDorsolateral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -670,7 +670,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCMedialDorsolateral = Nucleus::create("nucleusPFCMedialDorsolateral", sd);
 		regionPrefrontalCortex->add(nucleusPFCMedialDorsolateral);
-		nucleusPFCMedialDorsolateral->addColumns(10,5,10); 
+		nucleusPFCMedialDorsolateral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -684,7 +684,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCVentrolateral = Nucleus::create("nucleusPFCVentrolateral", sd);
 		regionPrefrontalCortex->add(nucleusPFCVentrolateral);
-		nucleusPFCVentrolateral->addColumns(10,5,10); 
+		nucleusPFCVentrolateral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -698,7 +698,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCOrbitofrontal = Nucleus::create("nucleusPFCOrbitofrontal", sd);
 		regionPrefrontalCortex->add(nucleusPFCOrbitofrontal);
-		nucleusPFCOrbitofrontal->addColumns(10,5,10); 
+		nucleusPFCOrbitofrontal->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -712,7 +712,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCVentromedial = Nucleus::create("nucleusPFCVentromedial", sd);
 		regionPrefrontalCortex->add(nucleusPFCVentromedial);
-		nucleusPFCVentromedial->addColumns(10,5,10); 
+		nucleusPFCVentromedial->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -726,7 +726,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCBasal = Nucleus::create("nucleusPFCBasal", sd);
 		regionPrefrontalCortex->add(nucleusPFCBasal);
-		nucleusPFCBasal->addColumns(10,5,10); 
+		nucleusPFCBasal->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -740,7 +740,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCOrbital = Nucleus::create("nucleusPFCOrbital", sd);
 		regionPrefrontalCortex->add(nucleusPFCOrbital);
-		nucleusPFCOrbital->addColumns(10,5,10); 
+		nucleusPFCOrbital->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -754,7 +754,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCFrontopolar = Nucleus::create("nucleusPFCFrontopolar", sd);
 		regionPrefrontalCortex->add(nucleusPFCFrontopolar);
-		nucleusPFCFrontopolar->addColumns(10,5,10); 
+		nucleusPFCFrontopolar->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -768,7 +768,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCAnterior = Nucleus::create("nucleusPFCAnterior", sd);
 		regionPrefrontalCortex->add(nucleusPFCAnterior);
-		nucleusPFCAnterior->addColumns(10,5,10); 
+		nucleusPFCAnterior->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -782,7 +782,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPFCRostral = Nucleus::create("nucleusPFCRostral", sd);
 		regionPrefrontalCortex->add(nucleusPFCRostral);
-		nucleusPFCRostral->addColumns(10,5,10); 
+		nucleusPFCRostral->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -813,7 +813,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusHippocampusproper = Nucleus::create("nucleusHippocampusproper", sd);
 		regionHippocampus->add(nucleusHippocampusproper);
-		nucleusHippocampusproper->addColumns(10,5,10); // 1000 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		nucleusHippocampusproper->addColumns(10,6,5,10); // 1000 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 	}
 	else
 	{
@@ -827,7 +827,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusDendategyrus = Nucleus::create("nucleusDendategyrus", sd);
 		regionHippocampus->add(nucleusDendategyrus);
-		nucleusDendategyrus->addColumns(10,5,10); 
+		nucleusDendategyrus->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -861,7 +861,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusPrimaryauditorycortex = Nucleus::create("nucleusPrimaryauditorycortex", sd);
 		regionAuditoryCortex->add(nucleusPrimaryauditorycortex);
-		nucleusPrimaryauditorycortex->addColumns(10,5,10); // 100 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		nucleusPrimaryauditorycortex->addColumns(10,6,5,10); // 100 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 	}
 	else
 	{
@@ -875,7 +875,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusCochlear = Nucleus::create("nucleusCochlear", sd);
 		regionAuditoryCortex->add(nucleusCochlear);
-		nucleusCochlear->addColumns(10,5,10); 
+		nucleusCochlear->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -889,7 +889,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusTrapezoid = Nucleus::create("nucleusTrapezoid", sd);
 		regionAuditoryCortex->add(nucleusTrapezoid);
-		nucleusTrapezoid->addColumns(10,5,10); 
+		nucleusTrapezoid->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -903,7 +903,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusSuperiorolivarycomplex = Nucleus::create("nucleusSuperiorolivarycomplex", sd);
 		regionAuditoryCortex->add(nucleusSuperiorolivarycomplex);
-		nucleusSuperiorolivarycomplex->addColumns(10,5,10); 
+		nucleusSuperiorolivarycomplex->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -917,7 +917,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusLaterallemniscus = Nucleus::create("nucleusLaterallemniscus", sd);
 		regionAuditoryCortex->add(nucleusLaterallemniscus);
-		nucleusLaterallemniscus->addColumns(10,5,10); 
+		nucleusLaterallemniscus->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -931,7 +931,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusInferiorcolliculi = Nucleus::create("nucleusInferiorcolliculi", sd);
 		regionAuditoryCortex->add(nucleusInferiorcolliculi);
-		nucleusInferiorcolliculi->addColumns(10,5,10); 
+		nucleusInferiorcolliculi->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -945,7 +945,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusACMedialgeniculate = Nucleus::create("nucleusACMedialgeniculate", sd);
 		regionAuditoryCortex->add(nucleusACMedialgeniculate);
-		nucleusACMedialgeniculate->addColumns(10,5,10); 
+		nucleusACMedialgeniculate->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -976,7 +976,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusVCLateralgeniculate = Nucleus::create("nucleusVCLateralgeniculate", sd);
 		regionPrimaryVisualCortex->add(nucleusVCLateralgeniculate);
-		nucleusVCLateralgeniculate->addColumns(10,5,10); 
+		nucleusVCLateralgeniculate->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -1008,7 +1008,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusV1= Nucleus::create("nucleusV1", sd);
 		regionVisualCortexV1->add(nucleusV1);
-		nucleusV1->addColumns(10,5,10); 
+		nucleusV1->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -1039,7 +1039,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusV2= Nucleus::create("nucleusV2", sd);
 		regionVisualCortexV2->add(nucleusV2);
-		nucleusV2->addColumns(10,5,10); 
+		nucleusV2->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -1070,7 +1070,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusV3= Nucleus::create("nucleusV3", sd);
 		regionVisualCortexV3->add(nucleusV3);
-		nucleusV3->addColumns(10,5,10); 
+		nucleusV3->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -1102,7 +1102,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusV4= Nucleus::create("nucleusV4", sd);
 		regionVisualCortexV4->add(nucleusV4);
-		nucleusV4->addColumns(10,5,10); 
+		nucleusV4->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -1133,7 +1133,7 @@ Brain * BrainDemo3::create(bool rebuild)
 	{
 		nucleusMT= Nucleus::create("nucleusMT", sd);
 		regionVisualCortexMT->add(nucleusMT);
-		nucleusMT->addColumns(10,5,10); 
+		nucleusMT->addColumns(10,6,5,10); 
 	}
 	else
 	{
@@ -1521,6 +1521,8 @@ Brain * BrainDemo3::create(bool rebuild)
 
 void BrainDemo3::step(Brain *brain)
 {
+		(void)brain;
+
 //	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 

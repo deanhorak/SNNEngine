@@ -5,5 +5,5 @@ build/objects/BrainDemo3.o: BrainDemo3.cpp Global.h NNComponent.h Tuple.h \
  NeuronMorphology.h Server.h NeuronProcessor.h TimedEvent.h \
  CollectionIterator.h ComponentDB.h \
  /usr/local/BerkeleyDB.18.1/include/db_cxx.h \
- /usr/local/BerkeleyDB.18.1/include/db.h CachedComponent.h TR1Random.h \
- BrainDemo3.h
+ /usr/local/BerkeleyDB.18.1/include/db.h GlobalBridge.h CachedComponent.h \
+ TR1Random.h BrainDemo3.h

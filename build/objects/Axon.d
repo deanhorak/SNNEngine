@@ -5,4 +5,4 @@ build/objects/Axon.o: Axon.cpp Axon.h Process.h NNComponent.h Tuple.h \
  NeuronMorphology.h Server.h NeuronProcessor.h TimedEvent.h \
  CollectionIterator.h ComponentDB.h \
  /usr/local/BerkeleyDB.18.1/include/db_cxx.h \
- /usr/local/BerkeleyDB.18.1/include/db.h CachedComponent.h
+ /usr/local/BerkeleyDB.18.1/include/db.h GlobalBridge.h CachedComponent.h

@@ -46,7 +46,7 @@ public:
 	Tuple *getImage(void);
 
 //	void connectTo(Cluster *cluster);
-	void projectTo(Cluster *cluster, float sparsity=100.f);
+	void projectTo(Cluster *cluster, float sparsity=100.f, float polarity=1.0);
 	void cycle(void);
 	std::vector<long> &getNeurons() { return this->neurons; }
 

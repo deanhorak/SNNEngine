@@ -70,7 +70,7 @@ Brain * BrainDemo2::create(bool rebuild)
 			size_t columnCount = 2;													// # of Columns
 			for(size_t i3=0;i3<columnCount;i3++) 
 			{
-				Column *c = Column::create(sd,n->id);
+				Column *c = Column::create(sd, 6, n->id);
 				size_t lSize = c->layers.size();
 				for(size_t k1=0;k1<lSize;k1++)
 				{
@@ -209,6 +209,7 @@ Brain * BrainDemo2::create(bool rebuild)
 
 void BrainDemo2::step(Brain *brain)
 {
+	(void)brain;
 //	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 

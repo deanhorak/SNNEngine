@@ -228,7 +228,6 @@ Brain* Brain::loadFromJSON(void)
 
 	BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt) {
 		boost::property_tree::basic_ptree<std::string, std::string, std::less<std::string>> x = v.second;
-		int y = 0;
 
 	}
 
@@ -304,6 +303,7 @@ Brain *Brain::load(void)
 	return brain;
 }
 
+/*
 void Brain::initializeRandom(void)
 {
 	std::string dummyStr;
@@ -317,6 +317,7 @@ void Brain::initializeRandom(void)
 	}
 
 }
+*/
 
 void Brain::adjustSynapses(void)
 {
@@ -423,7 +424,7 @@ void Brain::removeDeadAPs(void)
 Brain *Brain::instantiate(long key, size_t len, void *data)
 {
 // 	size_t size = sizeof(float)+sizeof(float)+sizeof(long)+sizeof(long);
-
+	(void)len;
 	Brain *brain = new Brain();
 	brain->id = key;
 
@@ -431,7 +432,7 @@ Brain *Brain::instantiate(long key, size_t len, void *data)
 
 	long regionCount = 0;
 	memcpy(&regionCount,ptr,sizeof(regionCount)); ptr+=sizeof(regionCount);
-	for(size_t i=0;i<regionCount;i++)
+	for(size_t i=0;i<(size_t)regionCount;i++)
 	{
 		long rid = 0;
 		memcpy(&rid,ptr,sizeof(rid));
@@ -457,7 +458,7 @@ Tuple *Brain::getImage(void)
 
 	memcpy(ptr,&regionCount,sizeof(regionCount)); 	ptr+=sizeof(regionCount);
 
-	for(size_t i=0;i<regionCount;i++)
+	for(size_t i=0;i<(size_t)regionCount;i++)
 	{
 		long k = regions[i];
 		memcpy(ptr,&k,sizeof(k));

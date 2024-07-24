@@ -29,8 +29,8 @@ class Neuron;
 class Dendrite: public Process
 {
 	Dendrite(void);
-	Dendrite(Neuron *neuron);
-	Dendrite(Neuron *neuron, long newId);
+	Dendrite(Neuron *neuron, float polarity);
+	Dendrite(Neuron *neuron, long newId,float polarity);
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const size_t version)
@@ -42,7 +42,7 @@ class Dendrite: public Process
 
 public:
 	virtual ~Dendrite(void);
-	static Dendrite *create(Neuron *postSynapticNeuron,Neuron *preSynapticNeuron);
+	static Dendrite *create(Neuron *postSynapticNeuron,Neuron *preSynapticNeuron, float polarity);
 	void fire(void);
 	Tuple *getImage(void);
 	static Dendrite *instantiate(long key, size_t len, void *data);
