@@ -73,18 +73,18 @@ Brain * BrainDemo3::create(bool rebuild)
 	brain->syncpoint();
 
 	// Create Thalamic Nuclei
-	Nucleus *nucleusAnteroventral = 0L;
+	Nucleus *regionDigits = 0L;
 
 	if(brain->restartpoint())
 	{
-		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral",sd, INTER_NUCLEUS);
-		regionThalamus->add(nucleusAnteroventral);
-		nucleusAnteroventral->addColumns(10,6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		regionDigits = Nucleus::create("regionDigits",sd, INTER_NUCLEUS);
+		regionThalamus->add(regionDigits);
+		regionDigits->addColumns(10,6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 	} 
 	else 
 	{
 		globalObject->nucleusDB.next();
-		nucleusAnteroventral = globalObject->nucleusDB.getValue();
+		regionDigits = globalObject->nucleusDB.getValue();
 	}
 	brain->syncpoint();
 

@@ -74,17 +74,31 @@ enum LayerType {input, output};
 #include "CollectionIterator.h"
 #include "ComponentDB.h"
 #include "Location3D.h"
-
+// Size of timeinterval (# of ms slots)
 #define MAX_TIMEINTERVAL_BUFFER_SIZE 10000
-#define MAX_THREADPOOL_SIZE 20
-#define THREADPOOL_SLICE_THRESHOLD 800 // threshold at which we'll divide the work up among MAX_THREADPOOL_SIZE threads
-#define MAX_ACTIVE_ACTIONPOTENTIALS 20000000 // 20 million
 
+// Max offset for new APs 
+#define MAX_TIMEINTERVAL_OFFSET 500
+// number of threads in pool
+#define MAX_THREADPOOL_SIZE 20
+// threshold at which we'll divide the work up among MAX_THREADPOOL_SIZE threads
+#define THREADPOOL_SLICE_THRESHOLD 400 
+// cap on number of APs before slowing down
+#define MAX_ACTIVE_ACTIONPOTENTIALS 20000000 // 20 million
+// initial axon rate
 #define DEFAULT_AXON_RATE 0.01f
+// axon rate change step
 #define DEFAULT_AXON_RATE_STEP 0.001f
+// initial dendrite rate
 #define DEFAULT_DENDRITE_RATE 0.01f
+// dendrite rate change step
 #define DEFAULT_DENDRITE_RATE_STEP 0.001f
-#define DEFAULT_STDP_RATE 0.5f
+// Default beginning dendrite distance
+#define DEFAULT_DENDRITE_DISTANCE 100
+// Default dendrite distance step
+#define DEFAULT_DENDRITE_DISTANCE_STEP 0.3
+// weight change rate for STDP
+#define DEFAULT_STDP_RATE 1.25f
 
 // time conversion factors for calls requiring microseconds
 // Microsecond is 1/1,000,000th of a second
@@ -93,15 +107,19 @@ enum LayerType {input, output};
 #define MILLISECONDS 1000
 // Second is 1,000,000 microseconds 
 #define SECONDS 1000000
-
+// resting potential
 #define RESTING_POTENTIAL -65.0f
-
+// initial learning rate
 #define INITIAL_LEARNING_RATE 10.0f
+// maximum synapse weight
 #define MAXIMUM_SYNAPSE_WEIGHT 65.0f
+// maximum rate for axon
+#define MAXIMUM_AXON_RATE 1.0f
+// maximum rate for dendrite
 #define MAXIMUM_DENDRITE_RATE 1.0f
-
+// enable the growth of new dendrites
 #define GROW_DENDRITES false
-
+// polarity
 #define EXCITATORY 1.0f
 #define INHIBITORY -1.0f
 

@@ -102,7 +102,7 @@ void Region::projectTo(Region *region, float sparsity)
 	size_t nMax = nSize * nSize2;
 	size_t nCount = 0;
 
-	LOGSTREAM(ss) << "   From region contains  " << nSize << " nuclei, to region contains " << nSize2 << " nuclei .." << std::endl;
+	LOGSTREAM(ss) << "   From region (" << this->name << ") contains  " << nSize << " nuclei, to region (" << region->name << ") contains " << nSize2 << " nuclei .." << std::endl;
 	globalObject->log(ss);
 
 	for(size_t i=0;i<nSize;i++)

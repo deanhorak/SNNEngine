@@ -385,19 +385,23 @@ std::string parseAndRespondJSON(std::string content)
         //
         free(tempBuffer);
 
+        long startTimer = globalObject->current_timestep;
         long lowestOffset = globalObject->batchFire(&firingNeurons);
 
         long delay =PROPAGATION_DELAY_MICROSECONDS;
-        if(lowestOffset < delay && lowestOffset > 0) delay = lowestOffset;
+        if(lowestOffset < delay && lowestOffset > 0) 
+          delay = lowestOffset;
 
-        long startTimer = globalObject->current_timestep;
+        if(delay>MAX_TIMEINTERVAL_OFFSET)
+            delay = MAX_TIMEINTERVAL_OFFSET;
+
         long endTimer = startTimer + delay + PROPAGATION_DELAY_MICROSECONDS;
         // globalObject->cycleNeurons(); // cycle through all neurons a if potiential > threshold, fire the neurons
 
         while(globalObject->current_timestep < endTimer) 
         { 
 //          std::cout << "delay current: " << globalObject->current_timestep << ", till: " << endTimer << std::endl; 
-          usleep(20); // 20ms delay to allow for ap propagation
+          usleep(10); // 20ms delay to allow for ap propagation
         }
 
         // we have fired the stimulus. Lets give a few ms to allow the APs to propagate.
@@ -440,20 +444,16 @@ std::string parseAndRespondJSON(std::string content)
 
         if (highestNeuron != NULL) // If there is a highest potentialed neuron, use it
         {
+          long highestNeuronId = (long)highestNeuron->id;
           for (size_t i = 0; i < totalSize; i++)
           {
-            long neuronId = neurons[i];
-            Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
             int byteindex = i / 8;
             int bitindex = i % 8; // get the modulus
 
-            if (neuron != NULL)
+            if (neurons[i]==highestNeuronId) // If we're the highest potential pic just me
             {
-              if (neuron==highestNeuron) // If we're the highest potential pic just me
-              {
-                totalFirings++;
-                tempBuffer[byteindex] = tempBuffer[byteindex] | bitmapper[bitindex];
-              }
+              totalFirings++;
+              tempBuffer[byteindex] = tempBuffer[byteindex] | bitmapper[bitindex];
             }
           }
         }
@@ -606,97 +606,38 @@ std::string parseAndRespondJSON(std::string content)
               Dendrite *outDendrite = globalObject->findConnectingDendrite(out, in);
               if (outDendrite == NULL)
               {
-                out->connectFrom(in,-1.0);
+                out->connectFrom(in,INHIBITORY);
               }
 
               Dendrite *inDendrite = globalObject->findConnectingDendrite(in, out);
               if (inDendrite == NULL)
               {
-                out->connectTo(in,-1.0); // default to inhibitory
+                out->connectTo(in,INHIBITORY); // default to inhibitory
               }
             }
           }
         }
 
-        globalObject->batchFire(&firingNeurons);
+        long startTimer = globalObject->current_timestep;
+        long lowestOffset = globalObject->batchFire(&firingNeurons);
 
-        // Ensure all coincident neurons have their associate dendrites rate adjusted to be coincident
-        // and their weights adjusted to ensure firing
-        // Increase the strength as retryCount increase
-        //          if (retryCount == 0) //  first pass through, just log the activity
-        //          {
-/*
-        if (globalObject->logEvents)
-        {
-          std::stringstream ss;
-          ss << "set_activation_pattern: inputNeurons=";
-          std::string sep = "";
-          int inputCount = inputFiringNeurons.size();
-          int outputCount = outputFiringNeurons.size();
-
-          if (inputCount == 0)
-          {
-            ss << "none";
-          }
-          else
-          {
-            for (int i = 0; i < inputCount; i++)
-            {
-              Neuron *neuron = inputFiringNeurons[i];
-              ss << sep << neuron->id;
-              sep = "/";
-            }
-          }
-
-          ss << ", outputNeurons=";
-          sep = "";
-          if (outputCount == 0)
-          {
-            ss << "none";
-          }
-          else
-          {
-            for (int i = 0; i < outputCount; i++)
-            {
-              Neuron *neuron = outputFiringNeurons[i];
-              ss << sep << neuron->id;
-              sep = "/";
-            }
-          }
-          globalObject->writeEventLog(ss.str().c_str());
-        }
-*/        
-/*
-        size_t iSize = inputFiringNeurons.size();
-        size_t oSize = outputFiringNeurons.size();
-
+        long delay =PROPAGATION_DELAY_MICROSECONDS;
+        if(lowestOffset < delay && lowestOffset > 0) 
+          delay = lowestOffset;
         
-        for (size_t i = 0; i < oSize; i++)
-        {
-          Neuron *neuronOutput = outputFiringNeurons[i];
+        if(delay>MAX_TIMEINTERVAL_OFFSET)
+            delay = MAX_TIMEINTERVAL_OFFSET;
 
-          for (size_t j = 0; j < iSize; j++)
-          {
-            Neuron *neuronInput = inputFiringNeurons[j];
-            // get the dendrite of the output neuron which receives input from the axon of the input neuron
-            Dendrite *d1 = globalObject->findConnectingDendrite(neuronOutput, neuronInput);
-            if (d1 != NULL) // and d2 != NULL)
-            {
-              long s1Id = d1->getSynapseId();
-              Synapse *s1 = globalObject->synapseDB.getComponent(s1Id);
-              float p1 = s1->getPosition();
-              float d1Rate = d1->getRate();
-              float offset1 = p1 * d1Rate;
-              long lOffset1 = static_cast<long>(std::round(offset1));
-              float desiredOffset = 1; // use 1 as out default offset
-              float newRate = desiredOffset / p1;
-              d1->setRate(newRate);
-              // s1->setWeight(65L); // ensure we have enough weight to trigger a neuron fire
-            }
-          }
-//          std::cout << "Output Neuron " << neuronOutput->id << " trained against " << iSize << " neurons." << std::endl;
+        long endTimer = startTimer + delay + PROPAGATION_DELAY_MICROSECONDS;
+        // globalObject->cycleNeurons(); // cycle through all neurons a if potiential > threshold, fire the neurons
+
+        while(globalObject->current_timestep < endTimer) 
+        { 
+//          std::cout << "delay current: " << globalObject->current_timestep << ", till: " << endTimer << std::endl; 
+          usleep(10); // 20ms delay to allow for ap propagation
         }
-*/
+
+
       }
       else
       {

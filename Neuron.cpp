@@ -48,6 +48,8 @@ Neuron::Neuron(unsigned long parentId, int nucleusType) : NNComponent(ComponentT
 	this->latch = false;
 	this->lastfired = 0; // globalObject->current_timestep;
 	this->latch = false;
+
+	this->distanceValue = 10.0;
 	SpatialDetails sd(2500, 2500, 2500, 5000, 5000, 5000); // Dummy test locations/size
 	sd.randomizeLocation();
 	this->location = sd.location;
@@ -61,6 +63,14 @@ Neuron::Neuron(unsigned long parentId, int nucleusType) : NNComponent(ComponentT
 Neuron::~Neuron(void)
 {
 }
+
+
+float Neuron::nextDistance(void)
+{
+	distanceValue += DEFAULT_DENDRITE_DISTANCE_STEP;
+	return distanceValue;
+}
+
 
 void Neuron::toJSON(std::ofstream &outstream)
 {
@@ -146,6 +156,7 @@ void Neuron::connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron, floa
 		return;
 
 	Dendrite *dendrite = Dendrite::create(postSynapticNeuron, preSynapticNeuron,polarity); // Create a dendrite and synapse and add to postSynapticNeuron collection
+	dendrite->setDistance(nextDistance());
 
 	preSynapticNeuron->dendriteMap.insert(std::make_pair(postSynapticNeuron->id, dendrite->id));
 
@@ -242,7 +253,7 @@ long Neuron::fire(void)
 
 	if (globalObject->logEvents)
 	{
-		std::vector<long> neurons = Server::getNeurons("nucleusAnteroventral", LayerType::output); // Layer 1 = input
+		std::vector<long> neurons = Server::getNeurons("regionDigits", LayerType::output); 
 		std::stringstream ss;
 		for (size_t i = 0; i < neurons.size(); i++)
 		{
@@ -260,7 +271,7 @@ long Neuron::fire(void)
 	if (globalObject->logResponseMode)
 	{
 		// Get neurons in output layer
-		std::vector<long> neurons = Server::getNeurons("nucleusAnteroventral", LayerType::output); // Layer 1 = input
+		std::vector<long> neurons = Server::getNeurons("regionDigits", LayerType::output); // Layer 1 = input
 		for (size_t i = 0; i < neurons.size(); i++)
 		{
 			long neuronId = neurons[i];
@@ -274,36 +285,8 @@ long Neuron::fire(void)
 	}
 
 
-	// If already firing, or within refactory period, re-fire anyway.
-	/*
-		if (firing)
-		{
-			return;
-		}
-		else if (globalObject->current_timestep - lastfired < REFACTORY_PERIOD)
-		{
-			return;
-		}
-	*/
-/*
-	if (globalObject->logEvents)
-	{
-		std::stringstream ss;
-		if (potential < 0)
-		{
-//			ss << "gettestresponse_neuron_firing: neuron=" << this->id << ", potential=" << potential; // << ", syanpses[";
-			ss << "setactivationpattern_neuron_firing: neuron=" << this->id << ", potential=" << potential; // << ", syanpses[";
-		}
-		else
-		{
-			ss << "organic_neuron_firing: neuron=" << this->id << ", potential=" << potential; // << ", syanpses[";
-		}
-		globalObject->writeEventLog(ss.str().c_str());
-	}
-*/
-
 	size_t aSize = axons.size();
-	long lowestOffset = MAX_TIMEINTERVAL_BUFFER_SIZE;
+	long lowestOffset = MAX_TIMEINTERVAL_OFFSET;
 	for (size_t i = 0; i < aSize; i++)
 	{
 		Axon *a = globalObject->axonDB.getComponent(axons[i]);
@@ -465,6 +448,8 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 {
 	// Get list of connected neurons by tracing all synapses on the axon to dendrites to neurons
 
+
+	(void)learningInterval;
 	std::vector<Neuron *> *preNeurons = neurons->first;
 	std::vector<Neuron *> *postNeurons = neurons->second;
 	size_t num_pre_neurons = preNeurons->size();
@@ -497,20 +482,24 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 				Synapse *synapse = globalObject->synapseDB.getComponent(synapseId);
 				unsigned long lastTimeNeuronFired = (unsigned long)preneuron->lastfired; // timestamp
 
-				float distance = (float)(this->lastfired - lastTimeNeuronFired);
-				float delta = 0;
+				long lDistance = (long) (this->lastfired - lastTimeNeuronFired);
+				float calculatedDistance = (float)lDistance;
+
 				//float prev = preDendrite->getRate();
 				long synapseId2 = preDendrite->getSynapseId();
 				Synapse *synapse2 = globalObject->synapseDB.getComponent(synapseId2);
 
-				if (distance != 0.0) // If we're in sync don't change anything
+				long desiredOffset = (long)synapse->getPosition();
+				if (calculatedDistance != 0 && calculatedDistance != desiredOffset) // If we're in sync don't change anything
 				{
 					float prev = preDendrite->getRate();
 					if (std::isinf(prev))
 						prev = 0.1;
-					float p1 = synapse->getPosition();
-					float desiredOffset = distance;
-					float newRate = desiredOffset / p1;
+
+					
+					float newRate = (float)desiredOffset / (float)calculatedDistance;
+
+					float delta = 0;
 
 					if(newRate > prev)
 						delta = newRate - prev;
@@ -526,17 +515,21 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 
 
 				}
-				double deltaT = (double)(learningInterval - lastTimeNeuronFired);
-				double weightChange = A_plus * std::exp(-deltaT / tau_plus);
-				weightChange *= synapse2->polarity;
-				float oldWeight = synapse2->getWeight();
-				float newWeight = oldWeight - (float)weightChange; // axonpreSynapseIdId strengthened (known as Long-Term Potentiation, LTP).
-				if(newWeight > MAXIMUM_SYNAPSE_WEIGHT)
-					newWeight = MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
-				if(newWeight < -MAXIMUM_SYNAPSE_WEIGHT)
-					newWeight = -MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
-				synapse2->setWeight(newWeight);
-//				std::cout << "applySTDP:neuronPre " << preneuron->id << " distance=" << distance << ", position =" << synapse->getPosition() << " fired before " << this->id << " by " << distance << "ms ratechg: " << delta << " from " << prev << " to " << preDendrite->getRate() << ", weight adjusted from " << oldWeight << " to " << newWeight << std::endl;
+
+				if(lDistance != 0)
+				{
+					double deltaT = (double) lDistance;
+					double weightChange = (A_plus * tau_plus) / deltaT; // A_plus * std::exp(-deltaT / tau_plus);
+					weightChange *= synapse2->polarity;
+					float oldWeight = synapse2->getWeight();
+					float newWeight = oldWeight - (float)weightChange; // axonpreSynapseIdId strengthened (known as Long-Term Potentiation, LTP).
+					if(newWeight > MAXIMUM_SYNAPSE_WEIGHT)
+						newWeight = MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
+					if(newWeight < -MAXIMUM_SYNAPSE_WEIGHT)
+						newWeight = -MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
+					synapse2->setWeight(newWeight);
+//					std::cout << "applySTDP:neuronPre " << preneuron->id << " distance=" << distance << ", position =" << synapse->getPosition() << " fired before " << this->id << " by " << distance << "ms ratechg: " << delta << " from " << prev << " to " << preDendrite->getRate() << ", weight adjusted from " << oldWeight << " to " << newWeight << std::endl;
+				}
 			}
 		}
 	}
@@ -557,19 +550,22 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 				Synapse *synapse = globalObject->synapseDB.getComponent(synapseId);
 				unsigned long lastTimeNeuronFired = (unsigned long)postneuron->lastfired; // timestamp
 
-				float distance = (float)(lastTimeNeuronFired - this->lastfired);
-				float delta = 0;
+				long lDistance = (long)(lastTimeNeuronFired - this->lastfired);
+				float calculatedDistance = (float)lDistance;
 				float prev = postDendrite->getRate();
 				long synapseId2 = postDendrite->getSynapseId();
 				Synapse *synapse2 = globalObject->synapseDB.getComponent(synapseId2);
+				float desiredOffset = synapse->getPosition();
 
-				if (distance != 0.0) // If we're in sync don't change anything
+				if (calculatedDistance != 0 && calculatedDistance != desiredOffset) // If we're in sync don't change anything
 				{
 					if (std::isinf(prev))
 						prev = 0.1;
-					float p1 = synapse->getPosition();
-					float desiredOffset = distance;
-					float newRate = desiredOffset / p1;
+
+					float newRate = (float)desiredOffset / (float)calculatedDistance;
+
+
+					float delta = 0;
 
 					if(newRate > prev)
 						delta = newRate - prev;
@@ -586,16 +582,19 @@ void Neuron::applySTDP(std::pair<std::vector<Neuron *> *, std::vector<Neuron *> 
 
 
 				}
-				double deltaT = (double)(lastTimeNeuronFired - learningInterval);
-				double weightChange = A_plus * std::exp(-deltaT / tau_plus);
-				weightChange *= synapse2->polarity;
-				float oldWeight = synapse2->getWeight();
-				float newWeight = oldWeight + (float)weightChange; // axonpreSynapseIdId weakened (known as Long-Term Depression, LTD).
-				if(newWeight > MAXIMUM_SYNAPSE_WEIGHT)
-					newWeight = MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
-				if(newWeight < -MAXIMUM_SYNAPSE_WEIGHT)
-					newWeight = -MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
-				synapse2->setWeight(newWeight);
+				if(lDistance != 0)
+				{
+					double deltaT = (double) lDistance;
+					double weightChange = (A_plus * tau_plus) / deltaT; // A_plus * std::exp(-deltaT / tau_plus);
+					weightChange *= synapse2->polarity;
+					float oldWeight = synapse2->getWeight();
+					float newWeight = oldWeight + (float)weightChange; // axonpreSynapseIdId weakened (known as Long-Term Depression, LTD).
+					if(newWeight > MAXIMUM_SYNAPSE_WEIGHT)
+						newWeight = MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
+					if(newWeight < -MAXIMUM_SYNAPSE_WEIGHT)
+						newWeight = -MAXIMUM_SYNAPSE_WEIGHT;  // cap the weight to within reason
+					synapse2->setWeight(newWeight);
+				}
 
 //				std::cout << "applySTDP:neuronPost " << postneuron->id << " distance=" << distance << ", position =" << synapse->getPosition() << " fired before " << this->id << " by " << distance << "ms ratechg: " << delta << " from " << prev << " to " << postDendrite->getRate()  << ", weight adjusted from " << oldWeight << " to " << newWeight << std::endl;
 			}

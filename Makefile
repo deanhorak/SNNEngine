@@ -1,6 +1,6 @@
 CXX      := g++
 #CXXFLAGS := -O1 -g -Wall -Wno-reorder -Wno-write-strings -Wextra -fpermissive -DHAVE_CXX_STDHEADERS
-CXXFLAGS :=   -g -Wall -Wno-reorder -Wno-write-strings -Wextra -fpermissive -DHAVE_CXX_STDHEADERS
+CXXFLAGS :=   -g  -Wall -Wno-reorder -Wno-write-strings -Wextra -fpermissive -DHAVE_CXX_STDHEADERS
 BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
 APP_DIR  := $(BUILD)/apps

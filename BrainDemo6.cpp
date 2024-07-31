@@ -76,17 +76,17 @@ Brain * BrainDemo6::create(bool rebuild)
 	// Create Thalamic Nuclei
 	ColumnNeuronProfile profile; // default profile for all layers is Pyramidal neurons, 100 neurons per cluster, with 10 clusters
 
-	Nucleus *nucleusAnteroventral = 0L;
+	Nucleus *regionDigits = 0L;
 	if (brain->restartpoint())
 	{
-		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral", sd, SENSORY_NUCLEUS); // Sensory neurons
-		regionThalamus->add(nucleusAnteroventral);
-		nucleusAnteroventral->addColumns(10,6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		regionDigits = Nucleus::create("regionDigits", sd, SENSORY_NUCLEUS); // Sensory neurons
+		regionThalamus->add(regionDigits);
+		regionDigits->addColumns(10,6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 	}
 	else
 	{
 		globalObject->nucleusDB.next();
-		nucleusAnteroventral = globalObject->nucleusDB.getValue();
+		regionDigits = globalObject->nucleusDB.getValue();
 	}
 	brain->syncpoint();
 

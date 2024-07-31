@@ -165,7 +165,7 @@ long Axon::fire(void)
 		globalObject->writeEventLog(ss.str().c_str());
 	}
 
-	long lowestOffset = MAX_TIMEINTERVAL_BUFFER_SIZE;
+	long lowestOffset = MAX_TIMEINTERVAL_OFFSET;
 	size_t synapseSize = this->synapses.size();
 	for(size_t synapseIndex = 0;synapseIndex < synapseSize; synapseIndex++) 
 	{
@@ -178,13 +178,13 @@ long Axon::fire(void)
 		float lclRate = thisDendrite->getRate();
 //		long offset = (long)(s->getPosition() * lclRate) + REFACTORY_PERIOD; // give ourselves 100ms buffer
 // lets not adjust the axon rate - keep it steady. Only adjust dendrite rates in applySTDP method
-
-		long offset = (long)(thisSynapse->getPosition() * lclRate) + REFACTORY_PERIOD; // give ourselves 10ms buffer
-//		long offset = REFACTORY_PERIOD;
+		float pos = thisSynapse->getPosition();
+		long offset = ActionPotential::computeOffset(pos, lclRate) + REFACTORY_PERIOD; // give ourselves 10ms buffer
 		
-		if(offset < MAX_TIMEINTERVAL_BUFFER_SIZE && offset > 0)
+		if(offset > 0)
 		{
-			if(lowestOffset > offset) lowestOffset = offset;
+			if(lowestOffset > offset) 
+				lowestOffset = offset;
 			// std::cout << "Axon Offset " << offset << std::endl;
 			long timeslice = globalObject->current_timestep + offset;
 			

@@ -85,18 +85,18 @@ Brain* BrainDemoSimple::create(bool rebuild)
 	ColumnNeuronProfile profile;
 	profile.neuronMorphology.push_back(new NeuronMorphology(Pyramidal, 2, 2)); // set profile for Pyramidal neurons, 2 neurons per cluster, with 2 clusters
 	
-	Nucleus* nucleusAnteroventral = 0L;
+	Nucleus* regionDigits = 0L;
 	if (brain->restartpoint())
 	{
-		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral", sdAnteroventral, SENSORY_NUCLEUS);
-		regionThalamus->add(nucleusAnteroventral);
-		nucleusAnteroventral->addColumns(2, 6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
-		insertSynapses(nucleusAnteroventral);
+		regionDigits = Nucleus::create("regionDigits", sdAnteroventral, SENSORY_NUCLEUS);
+		regionThalamus->add(regionDigits);
+		regionDigits->addColumns(2, 6,5,10); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		insertSynapses(regionDigits);
 	}
 	else
 	{
 		globalObject->nucleusDB.next();
-		nucleusAnteroventral = globalObject->nucleusDB.getValue();
+		regionDigits = globalObject->nucleusDB.getValue();
 	}
 	brain->syncpoint();
 

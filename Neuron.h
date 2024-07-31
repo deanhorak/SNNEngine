@@ -91,6 +91,7 @@ public:
 	inline std::vector<long> *getAxons(void) { return &axons; };
 	inline std::vector<long> *getDendrites(void) { return &dendrites; };
 	std::string getLocationOfNeuron(void);
+	float nextDistance(void);
 
 	void setFiring(bool value=true);
 
@@ -107,6 +108,8 @@ private:
 
 	std::vector<long> axons;
 	std::vector<long> dendrites;
+
+	float distanceValue;
 public:	
 
 	std::unordered_map<long, long> dendriteMap; 

@@ -60,21 +60,21 @@ Brain * BrainDemoTiny::create(bool rebuild)
 
 
 	// Create Thalamus
-	LOGSTREAM(ss) << "Create Thalamus region... " << std::endl;
+	LOGSTREAM(ss) << "Create regionDigits region... " << std::endl;
 	globalObject->log(ss);
 
 	// Digits - 10 neurons
-	Region *regionThalamus = 0L;
+	Region *regionDigits = 0L;
 	if(brain->restartpoint())
 	{
-		regionThalamus = Region::create("regionThalamus", sd);
-		brain->add(regionThalamus);
+		regionDigits = Region::create("regionDigits", sd);
+		brain->add(regionDigits);
 	} 
 	else 
 	{
 		long regionId = globalObject->componentBase[ComponentTypeRegion]; 
-		regionThalamus = globalObject->regionDB.getComponent(regionId);
-		LOGSTREAM(ss) << "regionThalamus globalObject->regionDB.getComponent(" << regionId << ") " << std::endl;
+		regionDigits = globalObject->regionDB.getComponent(regionId);
+		LOGSTREAM(ss) << "regionDigits globalObject->regionDB.getComponent(" << regionId << ") " << std::endl;
 		globalObject->log(ss);
 	}
 	brain->syncpoint();
@@ -83,89 +83,61 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	// Create Thalamic Nuclei
 	ColumnNeuronProfile profile; // default profile for all layers is Pyramidal neurons, 100 neurons per cluster, with 10 clusters
 
-	Nucleus *nucleusAnteroventral = 0L;
+	Nucleus *nucleusDigits = 0L;
 	if(brain->restartpoint())
 	{
-		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral", sd);
-		nucleusAnteroventral->nucleusType = SENSORY_NUCLEUS;
-		regionThalamus->add(nucleusAnteroventral);
-//		nucleusAnteroventral->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
-//		nucleusAnteroventral->addColumns(1,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
-		nucleusAnteroventral->addColumns(1,2,1,10); // 1 column, each with 2 layers, each with 1 clusters, each with 10 neurons
+		nucleusDigits = Nucleus::create("nucleusDigits", sd);
+		nucleusDigits->nucleusType = MOTOR_NUCLEUS;
+		regionDigits->add(nucleusDigits);
+//		regionDigits->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+//		regionDigits->addColumns(1,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
+		nucleusDigits->addColumns(1,1,1,10); // 1 column, each with 2 layers, each with 1 clusters, each with 10 neurons
 	} 
 	else 
 	{
 		long nucleusId = globalObject->componentBase[ComponentTypeNucleus]; 
-		nucleusAnteroventral = globalObject->nucleusDB.getComponent(nucleusId);
+		nucleusDigits = globalObject->nucleusDB.getComponent(nucleusId);
 	}
 	brain->syncpoint();
 
-	LOGSTREAM(ss) << "Region " << regionThalamus->name << " complete with " << regionThalamus->nuclei.size() << " nuclei." << std::endl;
+	LOGSTREAM(ss) << "Region " << regionDigits->name << " complete with " << regionDigits->nuclei.size() << " nuclei." << std::endl;
 	globalObject->log(ss);
 
 	// Images - 784 neurons
-	Region *regionVisualCortex = 0L;
+	Region *regionImages = 0L;
 	if(brain->restartpoint())
 	{
-		regionVisualCortex = Region::create("regionVisualCortex", sd);
-		brain->add(regionVisualCortex);
+		regionImages = Region::create("regionImages", sd);
+		brain->add(regionImages);
 	}
 	else
 	{
 		long regionId = globalObject->componentBase[ComponentTypeRegion] + 1; 
-		regionVisualCortex = globalObject->regionDB.getComponent(regionId);
+		regionImages = globalObject->regionDB.getComponent(regionId);
 	}
 	brain->syncpoint();
 
-	Nucleus *lateralGeniculateNucleus = 0L;
+	Nucleus *nucleusImages = 0L;
 	if(brain->restartpoint())
 	{
-		lateralGeniculateNucleus = Nucleus::create("LateralGeniculateNucleus", sd);
-		regionVisualCortex->add(lateralGeniculateNucleus);
-//		LateralGeniculateNucleus->addColumns(1,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
-		lateralGeniculateNucleus->addColumns(1,1,1,784*8); // 1 column, each with 1 layers, each with 1 clusters, each with 784*8 neurons
+		nucleusImages = Nucleus::create("nucleusImages", sd);
+		nucleusImages->nucleusType = SENSORY_NUCLEUS;
+
+		regionImages->add(nucleusImages);
+//		nucleusImages->addColumns(1,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
+		nucleusImages->addColumns(1,1,1,784*8); // 1 column, each with 1 layers, each with 1 clusters, each with 784*8 neurons
 	}
 	else
 	{
 		long nucleusId = globalObject->componentBase[ComponentTypeNucleus] + 1; 
-		lateralGeniculateNucleus = globalObject->nucleusDB.getComponent(nucleusId);
+		nucleusImages = globalObject->nucleusDB.getComponent(nucleusId);
 	} 
 	brain->syncpoint();
 
-	LOGSTREAM(ss) << "Region " << regionVisualCortex->name << " complete with " << regionVisualCortex->nuclei.size() << " nuclei." << std::endl;
+	LOGSTREAM(ss) << "Region " << regionImages->name << " complete with " << regionImages->nuclei.size() << " nuclei." << std::endl;
 	globalObject->log(ss);
 
-	Region *regionAssociationCortex = 0L;
-	if(brain->restartpoint())
-	{
-		regionAssociationCortex = Region::create("regionAssociationCortex", sd);
-		brain->add(regionAssociationCortex);
-	}
-	else
-	{
-		long regionId = globalObject->componentBase[ComponentTypeRegion] + 1; 
-		regionAssociationCortex = globalObject->regionDB.getComponent(regionId);
-	}
-	brain->syncpoint();
-
-	Nucleus *associationNucleus = 0L;
-	if(brain->restartpoint())
-	{
-		associationNucleus = Nucleus::create("AssociationNucleus", sd);
-		regionAssociationCortex->add(associationNucleus);
-//		LateralGeniculateNucleus->addColumns(1,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
-		associationNucleus->addColumns(1,1,1,784); // 1 column, each with 1 layers, each with 1 clusters, each with 784*8*10 neurons
-	}
-	else
-	{
-		long nucleusId = globalObject->componentBase[ComponentTypeNucleus] + 1; 
-		associationNucleus = globalObject->nucleusDB.getComponent(nucleusId);
-	} 
-	brain->syncpoint();
-
-	LOGSTREAM(ss) << "Region " << regionAssociationCortex->name << " complete with " << regionAssociationCortex->nuclei.size() << " nuclei." << std::endl;
-	globalObject->log(ss);
-
+	
 	LOGSTREAM(ss) << std::endl << "... " << std::endl << std::endl;
 	globalObject->log(ss);
 
@@ -193,46 +165,13 @@ Brain * BrainDemoTiny::create(bool rebuild)
 
 
 	// Thalamus project to all other regions
-	LOGSTREAM(ss) << "    regionVisualCortex->projectTo(regionThalamus)" << std::endl;
+	LOGSTREAM(ss) << "    regionDigits->projectTo(regionImages)" << std::endl;
 	globalObject->log(ss);
 	if(brain->restartpoint())
 	{
-		regionVisualCortex->projectTo(regionThalamus,100.f);
+		regionDigits->projectTo(regionImages,100.f);
 	}
 	brain->syncpoint();
-
-	LOGSTREAM(ss) << "    regionThalamus->projectTo(regionVisualCortex)" << std::endl;
-	globalObject->log(ss);
-	if(brain->restartpoint())
-	{
-		regionThalamus->projectTo(regionVisualCortex,100.f);
-	}
-	brain->syncpoint();
-
-	LOGSTREAM(ss) << "    regionThalamus->projectTo(regionAssociationCortex)" << std::endl;
-	globalObject->log(ss);
-	if(brain->restartpoint())
-	{
-		regionThalamus->projectTo(regionAssociationCortex,100.f);
-	}
-	brain->syncpoint();
-
-	LOGSTREAM(ss) << "    regionVisualCortex->projectTo(regionAssociationCortex)" << std::endl;
-	globalObject->log(ss);
-	if(brain->restartpoint())
-	{
-		regionVisualCortex->projectTo(regionAssociationCortex,100.f);
-	}
-	brain->syncpoint();
-
-	LOGSTREAM(ss) << "    regionAssociationCortex->projectTo(regionThalamus)" << std::endl;
-	globalObject->log(ss);
-	if(brain->restartpoint())
-	{
-		regionAssociationCortex->projectTo(regionThalamus,100.f);
-	}
-	brain->syncpoint();
-
 
 	LOGSTREAM(ss) << "------------------------------------------------------" << std::endl;
 	globalObject->log(ss);
@@ -311,8 +250,8 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	globalObject->log(ss);
 
 	globalObject->logStructure();
-//	globalObject->logStructure(nucleusAnteroventral);
-//	globalObject->logStructure(LateralGeniculateNucleus);
+//	globalObject->logStructure(regionDigits);
+//	globalObject->logStructure(nucleusImages);
 
 
 	return brain;
@@ -335,12 +274,15 @@ void BrainDemoTiny::finalDendriteAdjustments(std::stringstream &ss)
 			long mainAxonId = (*axons)[0];
 			Axon *thisAxon = globalObject->axonDB.getComponent(mainAxonId);
 			std::vector<long> *synapses = thisAxon->getSynapses();
-			long synapseId = (*synapses)[0];
-			Synapse *thisSynapse = globalObject->synapseDB.getComponent(synapseId);
+			if(synapses->size()>0)
+			{
+				long synapseId = (*synapses)[0];
+				Synapse *thisSynapse = globalObject->synapseDB.getComponent(synapseId);
 
-			long sourceNeuronId = thisSynapse->postSynapticNeuronId; //????
-			Neuron *sourceNeuron = globalObject->neuronDB.getComponent(sourceNeuronId);
-			neuron->connectFrom(sourceNeuron,thisSynapse->polarity);
+				long sourceNeuronId = thisSynapse->postSynapticNeuronId; //????
+				Neuron *sourceNeuron = globalObject->neuronDB.getComponent(sourceNeuronId);
+				neuron->connectFrom(sourceNeuron,thisSynapse->polarity);
+			}
 		}
 	}
 

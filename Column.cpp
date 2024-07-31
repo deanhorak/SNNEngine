@@ -157,11 +157,12 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 			Layer *layer1 = globalObject->layerDB.getComponent(c->layers[0]); 
 			Layer *layer2 = globalObject->layerDB.getComponent(c->layers[1]);
 
+			c->inputLayer = 1;
+			c->outputLayer = 2;
+
 			layer1->projectTo(layer2); //  connect layer 1 (input) to layer 2 and 3
 			layer2->projectTo(layer1);
 
-			c->inputLayer = 1;
-			c->outputLayer = 2;
 
 	
 			break;
@@ -288,7 +289,7 @@ void Column::projectTo(Column *targetColumn, float sparsity)
 	}
 
 
-	int sourceLayerCount = layers.size();
+	int sourceLayerCount = sourceColumn->layers.size();
 
 	for(int i=0;i<sourceLayerCount;i++)
 	{
@@ -315,26 +316,21 @@ void Column::projectTo(Column *targetColumn, float sparsity)
 	}
 */
 
+	// source column should send it's output layer to the target column's input layer
+
 	int input = targetColumn->inputLayer - 1;
 	Layer *tLayer = targetLayer[input];
 
-	int output = this->outputLayer -1;
+	int output = sourceColumn->outputLayer -1;
 	Layer *sLayer = sourceLayer[output];
 
-	if(input!=output) 
-	{
-		LOGSTREAM(ss) << "      Projecting neurons in source layer " << input << " to target layer " << output << std::endl;
-		globalObject->log(ss);
-		sLayer->projectTo(tLayer,sparsity,EXCITATORY); // excitatory
+	LOGSTREAM(ss) << "      Projecting neurons in column (" << this->id << ") source layer " << input << " to column (" << targetColumn->id << ") target layer " << output << std::endl;
+	globalObject->log(ss);
+	sLayer->projectTo(tLayer,sparsity,EXCITATORY); // excitatory
 
-		LOGSTREAM(ss) << "      Projecting neurons target layer " << output << " to source layer " << input << std::endl;
-		globalObject->log(ss);
-		sLayer->projectTo(tLayer,sparsity,EXCITATORY); 
-	}
-	else
-	{
-		LOGSTREAM(ss) << "      Source layer same as target layer, so no projections " << std::endl;
-	}
+//		LOGSTREAM(ss) << "      Projecting neurons target layer " << output << " to source layer " << input << std::endl;
+//		globalObject->log(ss);
+//		sLayer->projectTo(tLayer,sparsity,EXCITATORY); 
 }
 
 void Column::cycle(void)

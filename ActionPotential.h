@@ -32,8 +32,10 @@ class ActionPotential: public NNComponent
 {
 private:    
 	ActionPotential(Process *p);
+
 public:
 	~ActionPotential(void);
 	static ActionPotential *create(Process *p);
+	static long computeOffset(float position, float rate);
 	unsigned long owningProcessId;
 };
