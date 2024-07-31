@@ -37,6 +37,7 @@ enum ComponentType {ComponentTypeUnknown=0, ComponentTypeBrain, ComponentTypeReg
 					ComponentTypeActionPotential, ComponentTypeTimedEvent};
 #define CTYPE_COUNT 13
 
+#define MOTOR_NUCLEUS 2
 #define SENSORY_NUCLEUS 1
 #define INTER_NUCLEUS 0
 

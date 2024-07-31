@@ -29,9 +29,12 @@ Dendrite::Dendrite(Neuron *neuron, float polarity):
 
 	setPreSynapticNeuronId(neuron->id);
 	setRate(DEFAULT_DENDRITE_RATE);
-	setDistance(10.0);
+	setDistance(DEFAULT_DENDRITE_DISTANCE);
 
 	Synapse *s = Synapse::create(this,polarity);
+
+	s->setPosition(this->getDistance()); // for now, lets set the position to the dendrite distance
+
 	this->synapseId = s->id;
 	s->setOwningDendriteId(this->id);
 }
@@ -41,11 +44,14 @@ Dendrite::Dendrite(Neuron *neuron, long newId, float polarity):
 {
 	setPreSynapticNeuronId(neuron->id);
 	setRate(DEFAULT_DENDRITE_RATE);
-	setDistance(10.0);
+	setDistance(DEFAULT_DENDRITE_DISTANCE);
 
 	Synapse *s = Synapse::create(this,polarity);
 	this->synapseId = s->id;
 	s->setOwningDendriteId(newId);
+
+	s->setPosition(this->getDistance()); // for now, lets set the position to the dendrite distance
+
 	neuron->setDirty();
 }
 
@@ -102,8 +108,8 @@ void Dendrite::fire(void)
 		float lclRate = getRate();
 
 		Synapse *s = globalObject->synapseDB.getComponent(this->synapseId);
-		long offset = lclDistance * lclRate;
-		if(offset < MAX_TIMEINTERVAL_BUFFER_SIZE && offset > 0)
+		long offset = ActionPotential::computeOffset(lclDistance, lclRate);
+		if(offset > 0)
 		{
 			long ownerId = s->getOwningDendriteId();
 			Axon *a = globalObject->axonDB.getComponent(ownerId);

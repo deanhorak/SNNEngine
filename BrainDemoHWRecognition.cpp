@@ -81,19 +81,19 @@ Brain * BrainDemoHWRecognition::create(bool rebuild)
 	// Create Thalamic Nuclei
 	ColumnNeuronProfile profile; // default profile for all layers is Pyramidal neurons, 100 neurons per cluster, with 10 clusters
 
-	Nucleus *nucleusAnteroventral = 0L;
+	Nucleus *regionDigits = 0L;
 	if(brain->restartpoint())
 	{
-		nucleusAnteroventral = Nucleus::create("nucleusAnteroventral", sd);
-		nucleusAnteroventral->nucleusType = SENSORY_NUCLEUS;
-		regionThalamus->add(nucleusAnteroventral);
-//		nucleusAnteroventral->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
-		nucleusAnteroventral->addColumns(1,6,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
+		regionDigits = Nucleus::create("regionDigits", sd);
+		regionDigits->nucleusType = SENSORY_NUCLEUS;
+		regionThalamus->add(regionDigits);
+//		regionDigits->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+		regionDigits->addColumns(1,6,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
 	} 
 	else 
 	{
 		globalObject->nucleusDB.next();
-		nucleusAnteroventral = globalObject->nucleusDB.getValue();
+		regionDigits = globalObject->nucleusDB.getValue();
 	}
 	brain->syncpoint();
 
@@ -113,17 +113,17 @@ Brain * BrainDemoHWRecognition::create(bool rebuild)
 	}
 	brain->syncpoint();
 
-	Nucleus *LateralGeniculateNucleus = 0L;
+	Nucleus *nucleusImages = 0L;
 	if(brain->restartpoint())
 	{
-		LateralGeniculateNucleus = Nucleus::create("LateralGeniculateNucleus", sd);
-		regionVisualCortex->add(LateralGeniculateNucleus);
-		LateralGeniculateNucleus->addColumns(1,6,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
+		nucleusImages = Nucleus::create("nucleusImages", sd);
+		regionVisualCortex->add(nucleusImages);
+		nucleusImages->addColumns(1,6,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
 	}
 	else
 	{
 		globalObject->nucleusDB.next();
-		LateralGeniculateNucleus = globalObject->nucleusDB.getValue();
+		nucleusImages = globalObject->nucleusDB.getValue();
 	} 
 	brain->syncpoint();
 
@@ -284,8 +284,8 @@ Brain * BrainDemoHWRecognition::create(bool rebuild)
 	globalObject->log(ss);
 
 	globalObject->logStructure();
-//	globalObject->logStructure(nucleusAnteroventral);
-//	globalObject->logStructure(LateralGeniculateNucleus);
+//	globalObject->logStructure(regionDigits);
+//	globalObject->logStructure(nucleusImages);
 
 
 	return brain;

@@ -95,7 +95,7 @@ Synapse *Synapse::create(Dendrite *dendrite, float polar)
 
 float Synapse::sumweights(Neuron *neuron)
 {
-	float sum = 0;
+	float sum = -1; // if no neurons are fired we won't reach threshold
 	std::vector<long> *dendrites = neuron->getDendrites();
 	long numDendrites = (*dendrites).size();
 	for(size_t i=0;i < (size_t)numDendrites;i++)
@@ -111,7 +111,8 @@ float Synapse::sumweights(Neuron *neuron)
 			Synapse *s = globalObject->synapseDB.getComponent(sId);
 			float attenuation = (FIRING_WINDOW - diff) / (FIRING_WINDOW);
 			float attenuatedWeight = s->getWeight() * attenuation;	// attenuate the weight based on how long ago it fired.
-			sum += attenuatedWeight;
+			float polarizedAttenuatedWeight = attenuatedWeight * s->polarity;
+			sum += polarizedAttenuatedWeight;
 		}
 	}
 	return sum;

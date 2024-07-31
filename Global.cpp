@@ -417,13 +417,14 @@ long Global::batchFire(std::vector<Neuron *> *firingNeurons)
 	*/
 
 
-	long lowestOffset = MAX_TIMEINTERVAL_BUFFER_SIZE;
+	long lowestOffset = MAX_TIMEINTERVAL_OFFSET;
     for (size_t i = 0; i < firingNeurons->size(); i++)
     {
 		
     	Neuron *neuron = (*firingNeurons)[i];
       	long offset = neuron->fire();
-		if(lowestOffset > offset) lowestOffset = offset;
+		if(lowestOffset > offset) 
+			lowestOffset = offset;
 
 
 		if(globalObject->logEvents) 

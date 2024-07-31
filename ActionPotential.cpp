@@ -43,8 +43,10 @@ ActionPotential *ActionPotential::create(Process *p)
 }
 
 // Compute the offset into the future (in ms) from current position along axon and speed (rate). 
-int computeOffset(float position, float rate) 
+long ActionPotential::computeOffset(float position, float rate) 
 {
-	int offset = (int)(position * rate);
+	long offset = (long)(position * rate);
+	if(offset>MAX_TIMEINTERVAL_OFFSET)
+		offset = MAX_TIMEINTERVAL_OFFSET;
 	return offset;
 }
