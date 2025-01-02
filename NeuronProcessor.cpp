@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -37,7 +37,7 @@ extern boost::mutex timestep_mutex;
 // Settable externs
 extern long FIRING_WINDOW;
 extern long PROPAGATION_DELAY_MICROSECONDS;
-extern float DECAY_FACTOR;
+extern double DECAY_FACTOR;
 extern long REFACTORY_PERIOD;
 extern float WEIGHT_GRADATION;
 extern float RATE_GRADATION;
@@ -56,6 +56,7 @@ void NeuronProcessor::doWork(void)
 
     long start = globalObject->componentBase[ComponentTypeNeuron];
     long end = globalObject->componentCounter[ComponentTypeNeuron];
+    unsigned long cts = (unsigned long)globalObject->getCurrentTimestamp();
     for(long x = start;x<end;x++)
     {
         Neuron *thisNeuron = globalObject->neuronDB.getComponent(x);
@@ -63,10 +64,10 @@ void NeuronProcessor::doWork(void)
         {
             if (thisNeuron->firing)
             { // If we are firing, check to see if refactory period is exceeded
-                if ((long)(globalObject->current_timestep - thisNeuron->lastfired) > FIRING_WINDOW)
+                if (cts - thisNeuron->lastfired > FIRING_WINDOW)
                 {
                     thisNeuron->setFiring(false);
-                    thisNeuron->potential = RESTING_POTENTIAL;
+                    thisNeuron->setMembranePotential(RESTING_POTENTIAL);
                 }
             }
         }
@@ -75,7 +76,7 @@ void NeuronProcessor::doWork(void)
    	if(globalObject->logEvents) 
 	{	
 		std::stringstream ss;
-		ss << "Brain_step: timestep=" << globalObject->current_timestep << ", cycle=runLearning";
+		ss << "Brain_step: timestep=" << globalObject->getCurrentTimestamp() << ", cycle=runLearning";
 		globalObject->writeEventLog(ss.str().c_str());
 	}
 */
@@ -84,7 +85,7 @@ void NeuronProcessor::doWork(void)
    	if(globalObject->logEvents) 
 	{	
 		std::stringstream ss;
-		ss << "Brain_step: timestep=" << globalObject->current_timestep << ", cycle=runLearning_complete";
+		ss << "Brain_step: timestep=" << globalObject->getCurrentTimestamp() << ", cycle=runLearning_complete";
 		globalObject->writeEventLog(ss.str().c_str());
 	}
 */
@@ -93,7 +94,7 @@ void NeuronProcessor::doWork(void)
    	if(globalObject->logEvents) 
 	{	
 		std::stringstream ss;
-		ss << "Brain_step: timestep=" << globalObject->current_timestep << ", cycle=cycleNeurons_complete";
+		ss << "Brain_step: timestep=" << globalObject->getCurrentTimestamp() << ", cycle=cycleNeurons_complete";
 		globalObject->writeEventLog(ss.str().c_str());
 	}
 */

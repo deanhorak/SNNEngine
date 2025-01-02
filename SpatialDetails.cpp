@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -27,8 +27,8 @@ void SpatialDetails::randomizeLocation() {
 	// TODO:
 	// using the area as the dimensions geneate a random location somewhere within those dimensions
 	// convert the dimensions into integers required by the randomizer, by multiplying by 1000, giving us 1/1000 resolution
-	location.x = ((float)(tr1random->generate(1, (int)(area.w * 1000))) / 1000.0f);
-	location.y = ((float)(tr1random->generate(1, (int)(area.h * 1000))) / 1000.0f);
-	location.z = ((float)(tr1random->generate(1, (int)(area.d * 1000))) / 1000.0f);
+	location.x += ((float)(tr1random->generate(1, (int)abs(area.w))));
+	location.y += ((float)(tr1random->generate(1, (int)abs(area.h))));
+	location.z += ((float)(tr1random->generate(1, (int)abs(area.d))));
 
 }

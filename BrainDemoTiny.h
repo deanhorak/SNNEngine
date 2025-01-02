@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -32,6 +32,7 @@ public:
 	static std::string formatNumber(unsigned long long number);
 	static void insertSynapses(Nucleus *nuc);
 	static void insertSynapses(Nucleus* nucA, Nucleus* nucB);
-	static void finalAxonAdjustments(std::stringstream &ss);
 	static void finalDendriteAdjustments(std::stringstream &ss);
+	static void finalAxonAdjustments(std::stringstream &ss);
+	//static void experiments(Nucleus *nucleus);
 };

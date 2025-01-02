@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -94,7 +94,7 @@ Region *Region::create(std::string name, SpatialDetails details, bool setToDirty
 }
 
 
-void Region::projectTo(Region *region, float sparsity)
+void Region::receiveInputFrom(Region *region, float sparsity, float polarity)
 {
 	std::stringstream ss;
 	size_t nSize = nuclei.size();
@@ -102,7 +102,7 @@ void Region::projectTo(Region *region, float sparsity)
 	size_t nMax = nSize * nSize2;
 	size_t nCount = 0;
 
-	LOGSTREAM(ss) << "   From region (" << this->name << ") contains  " << nSize << " nuclei, to region (" << region->name << ") contains " << nSize2 << " nuclei .." << std::endl;
+	LOGSTREAM(ss) << "   Input region (" << this->name << ") containing  " << nSize << " nuclei, from region (" << region->name << ") containing " << nSize2 << " nuclei .." << std::endl;
 	globalObject->log(ss);
 
 	for(size_t i=0;i<nSize;i++)
@@ -113,11 +113,11 @@ void Region::projectTo(Region *region, float sparsity)
 			Nucleus *nuc2 = globalObject->nucleusDB.getComponent(region->nuclei[j]);
 
 			size_t pct = (nCount++)*100/nMax;
-//			std::cout << "   Projecting Nucleus " << nuc1->id << " to " << nuc2->id << "..." << std::endl;
-			LOGSTREAM(ss) << "   Connecting Nucleus " << nuc1->name << " [" << nuc1->id << "] to " << nuc2->name << " [" << nuc2->id << "] (" << nCount << " of " << nMax << " - " << pct << "%) .." << std::endl;
+//			std::cout << "   recieveInputFrom Nucleus " << nuc1->id << " to " << nuc2->id << "..." << std::endl;
+			LOGSTREAM(ss) << "   Connecting receiving Nucleus " << nuc1->name << " [" << nuc1->id << "] to output nucleus " << nuc2->name << " [" << nuc2->id << "] (" << nCount << " of " << nMax << " - " << pct << "%) .." << std::endl;
 			globalObject->log(ss);
 
-			nuc1->projectTo(nuc2,sparsity);
+			nuc1->receiveInputFrom(nuc2,sparsity, polarity);
 		}
 	}
 }
@@ -128,44 +128,27 @@ void Region::removeDeadAPs(void)
 }
 */
 
-void Region::cycle(void)
+long Region::getStartNeuron(void)
 {
 	size_t nSize = nuclei.size();
-	for(size_t i=0;i<nSize;i++)
-	{
-		Nucleus *nuc1 = globalObject->nucleusDB.getComponent(nuclei[i]);
-		nuc1->cycle();
-	}
-/*
-	CollectionIterator<Nucleus *> itNucleus(&nuclei);
-	for (itNucleus.begin(); itNucleus.more(); itNucleus.next())
-	{
-		itNucleus.value()->cycle();
-	}
-*/
-//	removeDeadAPs();
-//	std::cout << "Region " << this->id << " cycled." << std::endl;
+	if(nSize==0)
+		return 0;
 
+	long nucId = nuclei[0];
+	Nucleus *nuc = globalObject->nucleusDB.getComponent(nucId);
+	return nuc->getStartNeuron();
 }
-/*
-void Region::initializeRandom(void)
+
+long Region::getEndNeuron(void)
 {
-	size_t rnd = (size_t) tr1random->generate(1,2); // Random # of Nuclei
+	size_t nSize = nuclei.size();
+	if(nSize==0)
+		return 0;
 
-	SpatialDetails sd(this->location,this->area);
-
-	for(size_t i=0;i<rnd;i++) 
-	{
-		SpatialDetails sdn(sd);
-		sdn.randomizeLocation();
-
-		Nucleus *n = Nucleus::create("dummy",sdn);
-		n->initializeRandom();
-		nuclei.push_back(n->id);
-	}
-
+	long nucId = nuclei[nSize-1];
+	Nucleus *nuc = globalObject->nucleusDB.getComponent(nucId);
+	return nuc->getEndNeuron();
 }
-*/
 
 Region *Region::instantiate(long key, size_t len, void *data)
 {
@@ -252,4 +235,16 @@ void Region::add(Nucleus *nucleus)
 {
 	nuclei.push_back(nucleus->id);
 	setDirty(true);
+}
+
+size_t Region::getNeuronCount()
+{
+	size_t neuronCount = 0;
+	for(long nucId : nuclei)
+	{
+		Nucleus *nucleus = globalObject->nucleusDB.getComponent(nucId);
+		neuronCount += (size_t)(nucleus->getEndNeuron() - nucleus->getStartNeuron());
+
+	}
+	return neuronCount;
 }

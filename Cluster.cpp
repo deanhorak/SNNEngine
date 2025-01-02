@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -78,7 +78,7 @@ Cluster *Cluster::create(SpatialDetails details, unsigned long parentId)
 }
 
 
-void Cluster::projectTo(Cluster *cluster, float sparsity, float polarity)
+void Cluster::receiveInputFrom(Cluster *cluster, float sparsity, float polarity)
 {
 	Cluster *clusterA = this;
 	Cluster *clusterB = cluster;
@@ -96,20 +96,27 @@ void Cluster::projectTo(Cluster *cluster, float sparsity, float polarity)
 		for(size_t j=0;j<bCount;j++)
 		{
 			Neuron *neuronB = globalObject->neuronDB.getComponent(clusterB->neurons[j]);
-			neuronA->projectTo(neuronB,polarity);
+			neuronA->receiveInputFrom(neuronB,polarity);
 		}
 	}
 }
 
-void Cluster::cycle(void)
+long Cluster::getStartNeuron(void)
 {
-	size_t size = neurons.size();
-	for(size_t i=0;i<size;i++)
-	{
-		Neuron *neuron = globalObject->neuronDB.getComponent(neurons[i]);
-		neuron->cycle();
-	}
+	size_t nSize = neurons.size();
+	if(nSize==0)
+		return 0;
 
+	return neurons[0];
+}
+
+long Cluster::getEndNeuron(void)
+{
+	size_t nSize = neurons.size();
+	if(nSize==0)
+		return 0;
+
+	return neurons[nSize-1];
 }
 
 void Cluster::initializeRandom(void)

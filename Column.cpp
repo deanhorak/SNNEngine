@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -160,8 +160,8 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 			c->inputLayer = 1;
 			c->outputLayer = 2;
 
-			layer1->projectTo(layer2); //  connect layer 1 (input) to layer 2 and 3
-			layer2->projectTo(layer1);
+			layer1->receiveInputFrom(layer2); //  connect layer 1 (input) to layer 2 and 3
+			layer2->receiveInputFrom(layer1);
 
 
 	
@@ -173,11 +173,11 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 			Layer *layer2 = globalObject->layerDB.getComponent(c->layers[1]);
 			Layer *layer3 = globalObject->layerDB.getComponent(c->layers[2]);
 
-			layer1->projectTo(layer2); //  connect layer 1 (input) to layer 2 and 3
-			layer2->projectTo(layer1);
-			layer2->projectTo(layer3);
-			layer1->projectTo(layer3); 
-			layer3->projectTo(layer2);
+			layer1->receiveInputFrom(layer2); //  connect layer 1 (input) to layer 2 and 3
+			layer2->receiveInputFrom(layer1);
+			layer2->receiveInputFrom(layer3);
+			layer1->receiveInputFrom(layer3); 
+			layer3->receiveInputFrom(layer2);
 
 			c->inputLayer = 1;
 			c->outputLayer = 3;
@@ -190,14 +190,14 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 			Layer *layer3 = globalObject->layerDB.getComponent(c->layers[2]);
 			Layer *layer4 = globalObject->layerDB.getComponent(c->layers[3]);
 
-			layer1->projectTo(layer2); //  connect layer 1 (input) to layer 2 and 3
-			layer1->projectTo(layer3);
+			layer1->receiveInputFrom(layer2); //  connect layer 1 (input) to layer 2 and 3
+			layer1->receiveInputFrom(layer3);
 
-			layer3->projectTo(layer4);
+			layer3->receiveInputFrom(layer4);
 
-			layer4->projectTo(layer2); //  connect layer 4 to layer 2,3 and 5
-			layer4->projectTo(layer3);
-			layer4->projectTo(layer1);
+			layer4->receiveInputFrom(layer2); //  connect layer 4 to layer 2,3 and 5
+			layer4->receiveInputFrom(layer3);
+			layer4->receiveInputFrom(layer1);
 
 			c->inputLayer = 1;
 			c->outputLayer = 4;
@@ -211,20 +211,20 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 			Layer *layer4 = globalObject->layerDB.getComponent(c->layers[3]);
 			Layer *layer5 = globalObject->layerDB.getComponent(c->layers[4]);
 
-			layer1->projectTo(layer2); //  connect layer 1 (input) to layer 2 and 3
-			layer1->projectTo(layer3);
+			layer1->receiveInputFrom(layer2); //  connect layer 1 (input) to layer 2 and 3
+			layer1->receiveInputFrom(layer3);
 
-			layer2->projectTo(layer5);
-			layer3->projectTo(layer5);
+			layer2->receiveInputFrom(layer5);
+			layer3->receiveInputFrom(layer5);
 
-			layer4->projectTo(layer2); //  connect layer 4 to layer 2,3 and 5
-			layer4->projectTo(layer3);
-			layer4->projectTo(layer5);
+			layer4->receiveInputFrom(layer2); //  connect layer 4 to layer 2,3 and 5
+			layer4->receiveInputFrom(layer3);
+			layer4->receiveInputFrom(layer5);
 
-			layer5->projectTo(layer1); //  connect layer 4 to layer 2 and 3
-			layer5->projectTo(layer2);
-			layer5->projectTo(layer3);
-			layer5->projectTo(layer4);
+			layer5->receiveInputFrom(layer1); //  connect layer 4 to layer 2 and 3
+			layer5->receiveInputFrom(layer2);
+			layer5->receiveInputFrom(layer3);
+			layer5->receiveInputFrom(layer4);
 
 			c->inputLayer = 1;
 			c->outputLayer = 5;
@@ -239,18 +239,18 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 			Layer *layer5 = globalObject->layerDB.getComponent(c->layers[4]);
 			Layer *layer6 = globalObject->layerDB.getComponent(c->layers[5]);
 
-			layer1->projectTo(layer2); //  connect layer 1 (input) to layer 2 and 3
-			layer1->projectTo(layer3);
+			layer1->receiveInputFrom(layer2); //  connect layer 1 (input) to layer 2 and 3
+			layer1->receiveInputFrom(layer3);
 
-			layer2->projectTo(layer5);
-			layer3->projectTo(layer5);
+			layer2->receiveInputFrom(layer5);
+			layer3->receiveInputFrom(layer5);
 
-			layer4->projectTo(layer2); //  connect layer 4 to layer 2,3 and 5
-			layer4->projectTo(layer3);
-			layer4->projectTo(layer5);
+			layer4->receiveInputFrom(layer2); //  connect layer 4 to layer 2,3 and 5
+			layer4->receiveInputFrom(layer3);
+			layer4->receiveInputFrom(layer5);
 
-			layer5->projectTo(layer5); //  connect layer 4 to layer 2 and 3
-			layer5->projectTo(layer6);
+			layer5->receiveInputFrom(layer5); //  connect layer 4 to layer 2 and 3
+			layer5->receiveInputFrom(layer6);
 
 			c->inputLayer = 1;
 			c->outputLayer = 6;
@@ -260,6 +260,29 @@ Column *Column::create(SpatialDetails details, size_t layerCount, unsigned long 
 
 
 	return c;
+}
+
+
+long Column::getStartNeuron(void)
+{
+	size_t lSize = layers.size();
+	if(lSize==0)
+		return 0;
+
+	long lId = layers[0];
+	Layer *layer = globalObject->layerDB.getComponent(lId);
+	return layer->getStartNeuron();
+}
+
+long Column::getEndNeuron(void)
+{
+	size_t lSize = layers.size();
+	if(lSize==0)
+		return 0;
+
+	long lId = layers[lSize-1];
+	Layer *layer = globalObject->layerDB.getComponent(lId);
+	return layer->getEndNeuron();
 }
 
 
@@ -273,7 +296,7 @@ void Column::connectTo(Column *column)
 }
 */
 
-void Column::projectTo(Column *targetColumn, float sparsity)
+void Column::receiveInputFrom(Column *targetColumn, float sparsity, float polarity)
 {
 	std::stringstream ss;
 	// Connect source layer1 (output) to target layer4 (input)
@@ -324,24 +347,13 @@ void Column::projectTo(Column *targetColumn, float sparsity)
 	int output = sourceColumn->outputLayer -1;
 	Layer *sLayer = sourceLayer[output];
 
-	LOGSTREAM(ss) << "      Projecting neurons in column (" << this->id << ") source layer " << input << " to column (" << targetColumn->id << ") target layer " << output << std::endl;
+	LOGSTREAM(ss) << "       Neurons in column (" << this->id << ")  layer " << input << " receiving input from  column (" << targetColumn->id << ") target layer " << output << std::endl;
 	globalObject->log(ss);
-	sLayer->projectTo(tLayer,sparsity,EXCITATORY); // excitatory
+	sLayer->receiveInputFrom(tLayer,sparsity,polarity); // excitatory
 
 //		LOGSTREAM(ss) << "      Projecting neurons target layer " << output << " to source layer " << input << std::endl;
 //		globalObject->log(ss);
 //		sLayer->projectTo(tLayer,sparsity,EXCITATORY); 
-}
-
-void Column::cycle(void)
-{
-	size_t layerCount = layers.size();												
-	for(size_t i=0;i<layerCount;i++) 
-	{
-		Layer *layer = globalObject->layerDB.getComponent(layers[i]);
-		layer->cycle();
-	}
-//	std::cout << "Column " << this->id << " cycled." << std::endl;
 }
 
 void Column::initializeRandom(unsigned long parentId)

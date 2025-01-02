@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -40,8 +40,8 @@ public:
 		distance = value; 
 		setDirty(true); 
 	};
-	inline float getRate(void) { return rate; };
-	 void setRate(float value); 
+	float getRate(void);
+	 void setRate(float value, bool calc=true); 
 
 	float rateUpdateCounter;
 

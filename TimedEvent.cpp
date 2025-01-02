@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -28,6 +28,7 @@ TimedEvent::TimedEvent(long timeSlice):
 	slice = timeSlice;
 	ap = NULL;
 	id = globalObject->nextComponent(ComponentTypeTimedEvent);
+	globalObject->incrementTimedEventsCounter();
 }
 
 TimedEvent::~TimedEvent(void)
@@ -35,6 +36,7 @@ TimedEvent::~TimedEvent(void)
 	if(ap!=NULL)
 		delete ap;
 	//std::cout << "destructing timed event " << id << std::endl;
+	globalObject->decrementTimedEventsCounter();
 }
 
 TimedEvent *TimedEvent::create(long timeSlice, Process *p, long synapseId)

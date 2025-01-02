@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -22,7 +22,7 @@
 #include "Global.h"
 #include "TR1Random.h"
 #include "BrainDemoTiny.h"
-
+#include "SNNEngine.h"
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 
@@ -46,18 +46,33 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	{
 		LOGSTREAM(ss) << " Loading brain" << std::endl;
 		globalObject->log(ss);
-		brain = Brain::load();
+		brain = Brain::load("../../../database/","BrainDemoTiny");
+		globalObject->readCounters();
 	} 
 	else 
 	{
 		LOGSTREAM(ss) << " Creating brain" << std::endl;
 		globalObject->log(ss);
-		brain = Brain::create();
+		brain = Brain::create(true,"../../../database/","BrainDemoTiny");
+
 	}
 
+	/*
+	enum ComponentType {ComponentTypeUnknown=0, ComponentTypeBrain, ComponentTypeRegion, ComponentTypeNucleus, ComponentTypeColumn, ComponentTypeLayer, 
+					ComponentTypeCluster, ComponentTypeNeuron, ComponentTypeAxon, ComponentTypeDendrite, ComponentTypeSynapse, 
+					ComponentTypeActionPotential, ComponentTypeTimedEvent};
+	#define CTYPE_COUNT 13
+	*/
 
-	SpatialDetails sd(25000, 25000, 25000, 50000, 50000, 50000); // Dummy test locations/size
 
+	SpatialDetails sdregionDigits(-10000, 5000, 5000, 5000, 5000, 5000); // Dummy test locations/size
+	SpatialDetails sdnucleusDigits(-10000, 5000, 5000, 5000, 5000, 5000); // Dummy test locations/size
+
+	SpatialDetails sdregionAssociative(5000, 0, -2500, 5000, 5000, 5000); // Dummy test locations/size
+	SpatialDetails sdnucleusAssociative(5000, 0, -2500, 5000, 5000, 5000); // Dummy test locations/size
+
+	SpatialDetails sdregionImages(-10000, -5000, -5000, 5000, 5000, 5000); // Dummy test locations/size
+	SpatialDetails sdnucleusImages(-10000, -5000, -5000, 5000, 5000, 5000); // Dummy test locations/size
 
 	// Create Thalamus
 	LOGSTREAM(ss) << "Create regionDigits region... " << std::endl;
@@ -67,13 +82,14 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	Region *regionDigits = 0L;
 	if(brain->restartpoint())
 	{
-		regionDigits = Region::create("regionDigits", sd);
-		brain->add(regionDigits);
+		regionDigits = Region::create("regionDigits", sdregionDigits);
 	} 
 	else 
 	{
 		long regionId = globalObject->componentBase[ComponentTypeRegion]; 
 		regionDigits = globalObject->regionDB.getComponent(regionId);
+		globalObject->insert(regionDigits);
+
 		LOGSTREAM(ss) << "regionDigits globalObject->regionDB.getComponent(" << regionId << ") " << std::endl;
 		globalObject->log(ss);
 	}
@@ -86,12 +102,41 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	Nucleus *nucleusDigits = 0L;
 	if(brain->restartpoint())
 	{
-		nucleusDigits = Nucleus::create("nucleusDigits", sd);
+		nucleusDigits = Nucleus::create("nucleusDigits", sdnucleusDigits);
 		nucleusDigits->nucleusType = MOTOR_NUCLEUS;
 		regionDigits->add(nucleusDigits);
 //		regionDigits->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
 //		regionDigits->addColumns(1,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
 		nucleusDigits->addColumns(1,1,1,10); // 1 column, each with 2 layers, each with 1 clusters, each with 10 neurons
+
+
+		float minX = nucleusDigits->location.x;
+		float maxX = minX + nucleusDigits->area.w;
+		float minZ = nucleusDigits->location.z;
+		float maxZ = minZ + nucleusDigits->area.d;
+
+		float spaceX = (nucleusDigits->area.w / 10); 
+
+		Column *column = globalObject->columnDB.getComponent(nucleusDigits->columns[0]);
+		Layer *layer = globalObject->layerDB.getComponent(column->layers[0]);
+		std::vector<long> clusters = layer->clusters;
+		int clusterCount = clusters.size();
+		float xCoord = minX;
+		float zCoord = minZ;
+		for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++)
+		{
+			Cluster *cluster = globalObject->clusterDB.getComponent(clusters[clusterIndex]);
+			std::vector<long> neurons = cluster->getNeurons();
+			int nCount = neurons.size();
+			float thisXCoord = xCoord;
+			for (int nIndex = 0; nIndex < nCount; nIndex++)
+			{
+				Neuron *neuron = globalObject->neuronDB.getComponent(neurons[nIndex]);
+				neuron->location.x = xCoord;
+				neuron->location.z = zCoord;
+				xCoord += spaceX;
+			}
+		}
 	} 
 	else 
 	{
@@ -107,26 +152,67 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	Region *regionImages = 0L;
 	if(brain->restartpoint())
 	{
-		regionImages = Region::create("regionImages", sd);
-		brain->add(regionImages);
+		regionImages = Region::create("regionImages", sdregionImages);
 	}
 	else
 	{
 		long regionId = globalObject->componentBase[ComponentTypeRegion] + 1; 
 		regionImages = globalObject->regionDB.getComponent(regionId);
+		globalObject->insert(regionImages);
 	}
 	brain->syncpoint();
 
 	Nucleus *nucleusImages = 0L;
 	if(brain->restartpoint())
 	{
-		nucleusImages = Nucleus::create("nucleusImages", sd);
+		nucleusImages = Nucleus::create("nucleusImages", sdnucleusImages);
 		nucleusImages->nucleusType = SENSORY_NUCLEUS;
 
 		regionImages->add(nucleusImages);
 //		nucleusImages->addColumns(1,1,784); // 1 column, each with 6 layers, each with 1 clusters, each with 784 neurons
-		nucleusImages->addColumns(1,1,1,784*8); // 1 column, each with 1 layers, each with 1 clusters, each with 784*8 neurons
+		nucleusImages->addColumns(1,1,784,8); // 1 column, each with 1 layers, each with 1 clusters, each with 784*8 neurons
+
+		int totalChangedCount = 0;
+		float minX = nucleusImages->location.x;
+		float maxX = minX + nucleusImages->area.w;
+		float minZ = nucleusImages->location.z;
+		float maxZ = minZ + nucleusImages->area.d;
+		float spaceX = (nucleusImages->area.w / 28) / 4; // 28 groupings of 8 neurons
+		float spaceZ = (nucleusImages->area.d / 28) / 2; // 28 groupings of 8 neurons
+		Column *column = globalObject->columnDB.getComponent(nucleusImages->columns[0]);
+		Layer *layer = globalObject->layerDB.getComponent(column->layers[0]);
+		std::vector<long> clusters = layer->clusters;
+		int clusterCount = clusters.size();
+		float xCoord = minX;
+		float zCoord = minZ;
+		int row =0;
+		for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++)
+		{
+			Cluster *cluster = globalObject->clusterDB.getComponent(clusters[clusterIndex]);
+			std::vector<long> neurons = cluster->getNeurons();
+			int nCount = neurons.size();
+			float thisXCoord = xCoord;
+			for (int nIndex = 0; nIndex < nCount; nIndex++)
+			{
+				Neuron *neuron = globalObject->neuronDB.getComponent(neurons[nIndex]);
+
+				neuron->location.x = xCoord;
+				neuron->location.z = zCoord;
+				xCoord += spaceX;
+				totalChangedCount++;
+			}
+			xCoord += spaceX*2;
+			if ((clusterIndex+1) % 28*8 == 0)
+			{
+				xCoord = minX;
+				zCoord += spaceZ * 2;
+			}
+
+		}
+
+		std::cout << "Total Neurons Adjusted: " << totalChangedCount << std::endl;
 	}
+
 	else
 	{
 		long nucleusId = globalObject->componentBase[ComponentTypeNucleus] + 1; 
@@ -134,7 +220,51 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	} 
 	brain->syncpoint();
 
+
+	// Associative region - 10 neurons
+	Region *regionAssociative = 0L;
+	if(brain->restartpoint())
+	{
+		regionAssociative = Region::create("regionAssociative", sdregionAssociative);
+	} 
+	else 
+	{
+		long regionId = globalObject->componentBase[ComponentTypeRegion] + 2; 
+		regionAssociative = globalObject->regionDB.getComponent(regionId);
+		globalObject->insert(regionAssociative);
+
+		LOGSTREAM(ss) << "regionAssociative globalObject->regionDB.getComponent(" << regionId << ") " << std::endl;
+		globalObject->log(ss);
+	}
+	brain->syncpoint();
+
+
+	Nucleus *nucleusAssociative = 0L;
+	if(brain->restartpoint())
+	{
+		nucleusAssociative = Nucleus::create("nucleusAssociative", sdnucleusAssociative);
+		nucleusAssociative->nucleusType = MOTOR_NUCLEUS;
+		regionAssociative->add(nucleusAssociative);
+//		regionDigits->addColumns(10,profile); // 10 columns, each with 6 layers, each with 5 clusters, each with 10 neurons
+//		regionDigits->addColumns(1,1,10); // 1 column, each with 6 layers, each with 1 clusters, each with 10 neurons
+		int numNeurons = 10; // 10 neurons in each cluster
+		nucleusAssociative->addColumns(5,6,5,numNeurons); // 1 column, each with 2 layers, each with 1 clusters, each with 10 neurons
+	} 
+	else 
+	{
+		long nucleusId = globalObject->componentBase[ComponentTypeNucleus]; 
+		nucleusAssociative = globalObject->nucleusDB.getComponent(nucleusId);
+	}
+	brain->syncpoint();
+
+	LOGSTREAM(ss) << "Region " << regionDigits->name << " complete with " << regionDigits->nuclei.size() << " nuclei." << std::endl;
+	globalObject->log(ss);
+
+
 	LOGSTREAM(ss) << "Region " << regionImages->name << " complete with " << regionImages->nuclei.size() << " nuclei." << std::endl;
+	globalObject->log(ss);
+
+	LOGSTREAM(ss) << "Region " << regionAssociative->name << " complete with " << regionAssociative->nuclei.size() << " nuclei." << std::endl;
 	globalObject->log(ss);
 
 	
@@ -163,15 +293,44 @@ Brain * BrainDemoTiny::create(bool rebuild)
 // Finally, attach the Regions
 
 
+	// receiveInputFrom means that the that the source extends dendrites to receive input from the target
 
-	// Thalamus project to all other regions
-	LOGSTREAM(ss) << "    regionDigits->projectTo(regionImages)" << std::endl;
+	// Digits receiveInputFrom images
+	LOGSTREAM(ss) << "    regionDigits->receiveInputFrom(regionImages)" << std::endl;
 	globalObject->log(ss);
 	if(brain->restartpoint())
 	{
-		regionDigits->projectTo(regionImages,100.f);
+		regionDigits->receiveInputFrom(regionImages,100.f,EXCITATORY_SYNAPSE);
 	}
 	brain->syncpoint();
+
+	// Associative receiveInputFrom to images
+	LOGSTREAM(ss) << "    regionAssociative->receiveInputFrom(regionImages)" << std::endl;
+	globalObject->log(ss);
+	if(brain->restartpoint())
+	{
+		regionAssociative->receiveInputFrom(regionImages,100.f,EXCITATORY_SYNAPSE);
+	}
+	brain->syncpoint();
+
+	// Associative receiveInputFrom to digits
+	LOGSTREAM(ss) << "    regionAssociative->receiveInputFrom(regionDigits)" << std::endl;
+	globalObject->log(ss);
+	if(brain->restartpoint())
+	{
+		regionAssociative->receiveInputFrom(regionDigits,100.f,EXCITATORY_SYNAPSE); // Inhibitory synapses!
+	}
+	brain->syncpoint();
+
+	// Digits receiveInputFrom to associative
+	LOGSTREAM(ss) << "    regionDigits->receiveInputFrom(regionAssociative)" << std::endl;
+	globalObject->log(ss);
+	if(brain->restartpoint())
+	{
+		regionDigits->receiveInputFrom(regionAssociative,100.f,INHIBITORY_SYNAPSE);	// Inhibitory synapses!
+	}
+	brain->syncpoint();
+
 
 	LOGSTREAM(ss) << "------------------------------------------------------" << std::endl;
 	globalObject->log(ss);
@@ -179,6 +338,28 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	globalObject->log(ss);
 	LOGSTREAM(ss) << formatNumber(globalObject->synapsesSize()) << " synapses created" << std::endl;
 	globalObject->log(ss);
+
+	
+
+	if(true)
+	{
+		long start_neuron = regionDigits->getStartNeuron();
+		long end_neuron = regionDigits->getEndNeuron();
+		LOGSTREAM(ss) << "          regionDigits " << (end_neuron - start_neuron +1 ) << " neurons [" << start_neuron << " - " << end_neuron << "]" << std::endl;
+		globalObject->log(ss);
+
+
+		start_neuron = regionImages->getStartNeuron();
+		end_neuron = regionImages->getEndNeuron();
+		LOGSTREAM(ss) << "          regionImages " << (end_neuron - start_neuron + 1) << " neurons [" << start_neuron << " - " << end_neuron << "]" << std::endl;
+		globalObject->log(ss);
+
+		start_neuron = regionAssociative->getStartNeuron();
+		end_neuron = regionAssociative->getEndNeuron();
+		LOGSTREAM(ss) << "          regionAssociative " << (end_neuron - start_neuron + 1) << " neurons [" << start_neuron << " - " << end_neuron << "]" << std::endl;
+		globalObject->log(ss);
+	}
+
 
 	unsigned long zeroAxonCount = 0;
 	unsigned long zeroDendriteCount = 0;
@@ -190,6 +371,7 @@ Brain * BrainDemoTiny::create(bool rebuild)
 	for (long axonId = axonIdStart; axonId < axonIdEnd; axonId++)
 	{
 		Axon *axon = globalObject->axonDB.getComponent(axonId);
+		
 		if(axon->getSynapses()->size()==0) {
 			zeroAxonCount++;
 //			std::cout << "BrainDemoHWRecognition.create: Axon " << axon->id << " has no synapses." << std::endl;
@@ -232,6 +414,12 @@ Brain * BrainDemoTiny::create(bool rebuild)
 
 			if(thisNeuronId > endNeuronId)
 				endNeuronId = thisNeuronId;
+
+			if(nuc->name.compare("nucleusAssociative")==0) // make associative neurons inhibitory
+			{
+				Neuron *n = globalObject->neuronDB.getComponent(thisNeuronId);
+				n->neuronPolarity = Polarity::INHIBITORY_NEURON;
+			}
 		}
 
 		LOGSTREAM(ss) << "Nucleus ..." << nuc->name << ": beginning neuron=" << startNeuronId <<", ending neuron=" << endNeuronId << std::endl;
@@ -256,6 +444,49 @@ Brain * BrainDemoTiny::create(bool rebuild)
 
 	return brain;
 }
+/*
+void BrainDemoTiny::experiments(Nucleus *nucleusImages)
+{
+	// Set any clusters beyond the first cluster to inhibitory
+	size_t colSize = nucleusImages->columns.size();
+	for (size_t i = 0; i < colSize; i++)
+	{
+		long thisColId = nucleusImages->columns[i];
+		Column *thisCol = globalObject->columnDB.getComponent(thisColId);
+		size_t layerSize = thisCol->layers.size();
+		for (size_t j = 0; j < layerSize; j++)
+		{
+			long thisLayerId = thisCol->layers[j];
+			Layer *thisLayer = globalObject->layerDB.getComponent(thisLayerId);
+			size_t clusterSize = thisLayer->clusters.size();
+			for (size_t k = 0; k < clusterSize; k++)
+			{
+				if (k != 0) // only change those clusters beyond the first
+				{
+					long thisClusterId = thisLayer->clusters[k];
+					Cluster *thisCluster = globalObject->clusterDB.getComponent(thisClusterId);
+					size_t neuronsSize = thisCluster->neurons.size();
+					for (size_t m = 0; m < neuronsSize; m++)
+					{
+						long thisNeuronId = thisCluster->neurons[m];
+						Neuron *thisNeuron = globalObject->neuronDB.getComponent(thisNeuronId);
+						std::vector<long> *dendrites = thisNeuron->getDendrites();
+						size_t dendritesSize = dendrites->size();
+						for (size_t n = 0; n < dendritesSize; n++)
+						{
+							long dendriteId = (*dendrites)[n];
+							Dendrite *thisDendrite = globalObject->dendriteDB.getComponent(dendriteId);
+							long thisSynapseId = thisDendrite->getSynapseId();
+							Synapse *thisSynapse = globalObject->synapseDB.getComponent(thisSynapseId);
+							thisSynapse->polarity = INHIBITORY;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+*/
 
 void BrainDemoTiny::finalDendriteAdjustments(std::stringstream &ss)
 {
@@ -424,13 +655,13 @@ void BrainDemoTiny::finalAxonAdjustments(std::stringstream &ss)
 void BrainDemoTiny::step(Brain *brain)
 {
 	(void)brain;
-//	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
+//	std::cout << "Current timestamp " << globalObject->getCurrentTimestamp() << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 
 	std::stringstream ss;
 /****
 	if(globalObject->actionPotentialsSize()>0) {
-		LOGSTREAM(ss) << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
+		LOGSTREAM(ss) << "Current timestamp " << globalObject->getCurrentTimestamp() << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 		globalObject->log(ss);
 	}
 ****/
@@ -454,9 +685,9 @@ void BrainDemoTiny::insertSynapses(Nucleus* nuc) {
 			long layerId = col->layers[j];
 			Layer *lay = globalObject->layerDB.getComponent(layerId);
 			// If inputlayer, polarity is inhibitory, otherwise excitatory
-			float polarity = EXCITATORY;
+			float polarity = EXCITATORY_SYNAPSE;
 			if(j==(size_t)col->inputLayer)
-				polarity = EXCITATORY;
+				polarity = EXCITATORY_SYNAPSE;
 
 			for (size_t k = 0; k < lay->clusters.size(); k++) {
 				long clusterId = lay->clusters[k];
@@ -521,7 +752,15 @@ Brain* BrainDemoTiny::createFromJSON(void)
 
 	LOGSTREAM(ss) << " Loading brain from JSON" << std::endl;
 	globalObject->log(ss);
-	brain = Brain::loadFromJSON();
+	brain = Brain::loadFromJSON("../../../database/","BrainDemoTiny");
 	return brain;
+}
+
+
+int main(int argc, char *argv[])
+{
+	SNNEngine *engine = new SNNEngine();
+	engine->initialize("../../../database/","BrainDemoTiny");
+	engine->startEngine();
 }
 

@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -20,48 +20,48 @@
  */
 
 #pragma once
+
 #include <map>
 #include <vector>
 #include "Process.h"
 #include "Synapse.h"
 #include "ActionPotential.h"
+#include "Range.h"
 
 class Axon: public Process
 {
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const size_t version)
-	{
-		ar & boost::serialization::base_object<NNComponent>(*this);
+    {
+        ar & boost::serialization::base_object<NNComponent>(*this);
         ar & neuronId;
 
         for(unsigned int i=0;i<synapses.size();i++)
         {
-        	ar & synapses[i];
+            ar & synapses[i];
         }
-	}
+    }
 
 public:
-	virtual ~Axon(void);
-	static Axon *create(Neuron *neuron);
-	void initializeRandom(void);
-	long fire(void);
-	Tuple *getImage(void);
-	static Axon *instantiate(long key, size_t len, void *data);
-	inline std::vector<long> *getSynapses(void) { return &synapses; };
-	void insertSynapse(long synapseId); 
-	void toJSON(std::ofstream& outstream);
+    virtual ~Axon(void);
+    static Axon *create(Neuron *neuron);
+    void initializeRandom(void);
+    Range fire(void);
+    Tuple *getImage(void);
+    static Axon *instantiate(long key, size_t len, void *data);
+    inline std::vector<long> *getSynapses(void) { return &synapses; };
+    void insertSynapse(long synapseId); 
+    void toJSON(std::ofstream& outstream);
 
-	long neuronId;
+    long neuronId;
 
 private:
+    Axon(void);
+    Axon(Neuron* neuron);
 
-	Axon(void);
-	Axon(Neuron* neuron);
+    void save(void);
+    void commit(void);
 
-	void save(void);
-	void commit(void);
-
-	std::vector<long> synapses;
+    std::vector<long> synapses;
 };
-

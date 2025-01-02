@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -20,105 +20,146 @@
  */
 
 #pragma once
+
 #include <cmath>
+#include <unordered_map>
 #include "NNComponent.h"
-#include <map>
-#include <vector>
 #include "Axon.h"
 #include "Dendrite.h"
 #include "Synapse.h"
 #include "ActionPotential.h"
 #include "SpatialDetails.h"
 #include "Cluster.h"
+#include "Range.h"
+#include "NeuronMorphology.h"
 
-enum NeuronType { Pyramidal, Unipolar, Bipolar, Multipolar, Purkinje };
+//#define EXCITATORY 1.0f
+//#define INHIBITORY -1.0f
+
+class Polarity {
+public:    
+    static constexpr float INHIBITORY_NEURON = -1.0f;
+    static constexpr float EXCITATORY_NEURON = 0.0f;
+};
+
+constexpr float THRESHOLD_INCREMENT       = 0.2f;
+constexpr float MIN_THRESHOLD             = 0.5f;
+constexpr float MAX_THRESHOLD             = 3.0f;
+constexpr float THRESHOLD_DECAY           = 0.01f;
 
 class Neuron: public NNComponent
 {
-	Neuron(unsigned long parentId, int nucleusType);
+    Neuron(unsigned long parentId, int nucleusType);
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const size_t version)
-	{
-		ar & boost::serialization::base_object<NNComponent>(*this);
+    {
+        ar & boost::serialization::base_object<NNComponent>(*this);
 
-		for(unsigned int i=0;i<axons.size();i++)
-		{
-			ar & axons[i];
-		}
-		for(unsigned int i=0;i<dendrites.size();i++)
-		{
-			ar & dendrites[i];
-		}
+        for(unsigned int i=0;i<axons.size();i++)
+        {
+            ar & axons[i];
+        }
+        for(unsigned int i=0;i<dendrites.size();i++)
+        {
+            ar & dendrites[i];
+        }
         ar & threshold;
-        ar & potential;
-		ar & location.x;
-		ar & location.y;
-		ar & location.z;
-		ar & lastfired;
+        ar & membranePotential;
+        ar & location.x;
+        ar & location.y;
+        ar & location.z;
+        ar & lastfired;
         ar & firing;
-	}
+    }
 
 public:
-	virtual ~Neuron(void);
-	static Neuron*create(SpatialDetails details, NeuronType nType, unsigned long parentId, int nucleusType);
-	static Neuron*recreate(void);
-	void initializeRandom(void);
-	bool isAssociated(long synapseId);
-	void connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron, float polarity);
-	void connectTo(Neuron *targetNeuron, float polarity);
-	void connectFrom(Neuron *sourceNeuron, float polarity);
-	void projectTo(Neuron *targetNeuron, float polarity);
-	void cycle(void);
-	bool isConnectedTo(Neuron *neuron);
-	void applySTDP(ActionPotential *ap, std::pair<std::vector<Tuple*>*, std::vector<Tuple*>* >*slices);
-	void applySTDP(std::pair<std::vector<Neuron*>*, std::vector<Neuron*>* >*neurons, long learningInterval);
-	long fire(void);
-	Tuple *getImage(void);
-	static Neuron *instantiate(long key, size_t len, void *data);
+    virtual ~Neuron(void);
+    static Neuron* create(SpatialDetails details, NeuronType nType, unsigned long parentId, int nucleusType);
+    static Neuron* recreate(void);
+    void initializeRandom(void);
+    bool isAssociated(long synapseId);
+    void connect(Neuron *preSynapticNeuron, Neuron *postSynapticNeuron, float polarity);
+    void connectTo(Neuron *targetNeuron, float polarity);
+    void connectFrom(Neuron *sourceNeuron, float polarity);
+    void receiveInputFrom(Neuron *targetNeuron, float polarity=Polarity::EXCITATORY_NEURON);
+    bool isConnectedTo(Neuron *neuron);
 
-	long getNucleusId(void);
+    bool isContainedIn(std::vector<long> neurons, Neuron *neuron);
+    std::string generateOutputFiringString(std::vector<long> neurons,Neuron *thisNeuron);
+    float normalizeRate(float value, float minValue, float maxValue);
+    float computeConductionVelocity(Dendrite* dendrite, long timeDifference);
+    void adjustSynapticWeight(Synapse *synapse, float deltaT, float A, float tau, float polarity);
+    void applySTDP(std::pair<std::vector<Neuron*>*, std::vector<Neuron*>* >*neurons, long learningInterval);
+    Range fire(void);
+    Tuple *getImage(void);
+    static Neuron *instantiate(long key, size_t len, void *data);
 
-	long getCurrentTimestep(void);
+    void integrateSynapticInput(float input, long synapseId);
 
-	bool containsDendrite(long did);
+        // STDP or learning
+    void applySTDPToIncomingSynapses();
 
-	bool isFiring(float delay = 0);
-	inline bool hasFired(void) { return latch; };
-	inline void resetLatch(void) { latch = false; };
-	inline long getLastFired(void) { return lastfired; };
-	inline void setLastFired(unsigned long value) { lastfired = value; setDirty(true); };
-	inline std::vector<long> *getAxons(void) { return &axons; };
-	inline std::vector<long> *getDendrites(void) { return &dendrites; };
-	std::string getLocationOfNeuron(void);
-	float nextDistance(void);
-
-	void setFiring(bool value=true);
-
-	std::vector<long> *getAxonConnectedSynapses(void);
-	bool isFromSensoryNucleus(void);
-
-	void toJSON(std::ofstream& outstream);
+// STDP adjustments using parameters
+    void applySynapticWeightDelta(Synapse *synapse, float deltaT, float A, float tau, float polarity);
 
 
+    long getNucleusId(void);
+
+    long getCurrentTimestep(void);
+
+    bool containsDendrite(long did);
+
+    bool isFiring(float delay = 0);
+    inline bool hasFired(void) { return latch; };
+    inline void resetLatch(void) { latch = false; };
+    inline long getLastFired(void) { return lastfired; };
+    inline void setLastFired(unsigned long value) { lastfired = value; setDirty(true); };
+    inline std::vector<long> *getAxons(void) { return &axons; };
+    inline std::vector<long> *getDendrites(void) { return &dendrites; };
+    std::string getLocationOfNeuron(void);
+    float nextDistance(void);
+    inline float computeDistance(Location3D pointA, Location3D pointB); 
+
+    void setFiring(bool value=true);
+
+    std::vector<long> *getAxonConnectedSynapses(void);
+    bool isFromSensoryNucleus(void);
+
+    void toJSON(std::ofstream& outstream);
+
+    // New methods for improved dynamics and homeostasis:
+    void leakMembranePotential();  
+    void applySynapticScaling(float scalingFactor);
+    float getEstimatedFiringRate(); 
+    void recordSpike(); 
+
+    float recentSpikeCount; 
+    unsigned long lastUpdateStep;
+
+	float getMembranePotential(void) { return membranePotential; };
+	void setMembranePotential(float inPotential);
+
+public:	
+    std::unordered_map<long, long> dendriteMap; 
+    float threshold;
+    unsigned long lastfired;
+    bool firing;
+    NeuronType neuronType;
+    float neuronPolarity;
+    bool latch;
+    Location3D location;
+    int nucleusType;
 
 private:
-	void save(void);
-	void commit(void);
+    float membranePotential; // kept for backward compatibility
 
-	std::vector<long> axons;
-	std::vector<long> dendrites;
+    void save(void);
+    void commit(void);
 
-	float distanceValue;
-public:	
+    std::vector<long> axons;
+    std::vector<long> dendrites;
 
-	std::unordered_map<long, long> dendriteMap; 
-	float threshold;
-	float potential;
-	unsigned long lastfired;
-	bool firing;
-	NeuronType neuronType;
-	bool latch;// latch is used as a flip-flop to store firing status until the status is retrieved by IO
-	Location3D location;
-	int nucleusType; // What type of nucleus does this neuron belong to (eg 0 = interneuron, 1=sensory, etc) a sensory nuclear (T/F)?
+    float distanceValue;
 };
+

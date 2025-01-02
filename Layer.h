@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -21,8 +21,12 @@
 
 #pragma once
 #include <map>
-#include "Cluster.h"
 #include "NNComponent.h"
+#include "Cluster.h"
+
+// polarity - defined here because for some reason it can't see it in Global.h
+#define EXCITATORY 1.0f
+#define INHIBITORY -1.0f
 
 class Layer: public NNComponent
 {
@@ -55,10 +59,12 @@ public:
 	static Layer *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);
 
-//	void connectTo(Layer *layer);
-	void projectTo(Layer *layer, float sparsity=100.0f, float polarity=1.0);
-	void cycle(void);
+	void receiveInputFrom(Layer *layer, float sparsity=100.0f, float polarity=EXCITATORY_SYNAPSE);
 	void toJSON(std::ofstream& outstream);
+
+	long getStartNeuron(void);
+	long getEndNeuron(void);
+
 
 	std::vector<long> clusters;
 

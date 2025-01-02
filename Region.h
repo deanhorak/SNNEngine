@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -22,10 +22,16 @@
 #pragma once
 #include "NNComponent.h"
 #include <map>
-#include "Nucleus.h"
 #include "Location3D.h"
 #include "Size3D.h"
 #include "SpatialDetails.h"
+#include "Nucleus.h"
+
+
+
+// polarity - defined here because for some reason it can't see it in Global.h
+#define EXCITATORY 1.0f
+#define INHIBITORY -1.0f
 
 class Region: public NNComponent
 {
@@ -53,22 +59,22 @@ class Region: public NNComponent
 
 public:
 	virtual ~Region(void);
-//	static Region *create(std::string name, bool setToDirty=true);
 	static Region* create(std::string name, SpatialDetails details, bool setToDirty = true);
-	//void initializeRandom(void);
 
 	static Region *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);
 
 
-//	void connectTo(Region *region);
-	void projectTo(Region *region, float sparsity=100.0f);
-	void cycle(void);
-//	void removeDeadAPs(void);
+	void receiveInputFrom(Region *region, float sparsity=100.0f, float polarity=EXCITATORY_SYNAPSE);
 
 	void add(Nucleus *nucleus);
 
 	void toJSON(std::ofstream& outstream);
+
+	long getStartNeuron(void);
+	long getEndNeuron(void);
+
+	size_t getNeuronCount();
 
 
 	std::string name;

@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -25,7 +25,10 @@
 #include <map>
 #include "Region.h"
 #include "Server.h"
+#include "TimedEvent.h"
 #include "NeuronProcessor.h"
+#include "TimerProcessor.h"
+#include "SNNVisualizer.h"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
 
@@ -38,15 +41,15 @@ class Brain: public NNComponent
 	{
 		ar & boost::serialization::base_object<NNComponent>(*this);
 		for(unsigned int i=0;i<regions.size();i++)
-		{
+		{ 
 			ar & regions[i];
 		}
 	}
 public:
 	virtual ~Brain(void);
-	static Brain *create(bool setToDirty=true);
-	static Brain *load(void);
-	static Brain *loadFromJSON(void);
+	static Brain *create(bool setToDirty, std::string dbPath, std::string modelName);
+	static Brain *load(std::string dbPath, std::string modelName);
+	static Brain *loadFromJSON(std::string dbPath, std::string modelName);
 //	void initializeRandom(void);
 	void shutdown(void);
 
@@ -75,10 +78,18 @@ public:
 	void startNeuronProcessing(void);
 	void stopNeuronProcessing(void);
 	void validateAndFormatJSON(void);
+	void startTimerProcessing(void);
+	void stopTimerProcessing(void);
+	void startSNNVisualizer(void);
+	void stopSNNVisualizer(void);
+	void grabAllVectors(long cts, std::vector<TimedEvent *> *collectedVector);
 
 
 	Server networkServer;
 	NeuronProcessor neuronProcessor;
+	TimerProcessor timerProcessor;
+	SNNVisualizer snnVisualizer;
+
 	std::vector<long> regions;
 	int current_syncpoint;
 

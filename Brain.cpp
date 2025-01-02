@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -35,10 +35,10 @@
 extern bool keepRunning;
 
 extern Global *globalObject;
+extern SNNVisualizer *snnVisualizer;
 extern int main_process(Brain *brain);
 extern int neuron_process(Brain *brain);
 
-#define STALL_OVERHEAD 100
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -136,8 +136,8 @@ void Brain::excite(int num)
 void Brain::validateAndFormatJSON(void) {
     try {
         // Read the JSON file
-		std::string inputFilename = std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + std::string("temp.json").c_str();
-		std::string outputFilename = std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + std::string("serialized.json").c_str();
+		std::string inputFilename = std::string(globalObject->getDBPath()) +  globalObject->getModelName() + std::string("/") + std::string("temp.json").c_str();
+		std::string outputFilename = std::string(globalObject->getDBPath()) +  globalObject->getModelName() + std::string("/") + std::string("serialized.json").c_str();
 
 
         std::ifstream inputFile(inputFilename);
@@ -167,7 +167,7 @@ void Brain::exportJSON(void)
 	globalObject->log(ss);
 
 
-	std::ofstream ofs(std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + std::string("temp.json").c_str());
+	std::ofstream ofs(std::string(globalObject->getDBPath()) +  globalObject->getModelName() + std::string("/") + std::string("temp.json").c_str());
 	toJSON(ofs);
 	ofs.close();
 
@@ -201,10 +201,13 @@ void Brain::save(void)
 }
 
 
-Brain *Brain::create(bool setToDirty)
+Brain *Brain::create(bool setToDirty, std::string dbPath, std::string modelName)
 {
 	tr1random = new TR1Random();
-	globalObject = new Global();
+
+	globalObject->setDBPath(dbPath);
+	globalObject->setModelName(modelName);
+
 	Brain *brain = new Brain();
 	brain->id = globalObject->nextComponent(ComponentTypeBrain);
 	globalObject->insert(brain);
@@ -214,13 +217,14 @@ Brain *Brain::create(bool setToDirty)
 	return brain;
 }
 
-Brain* Brain::loadFromJSON(void)
+Brain* Brain::loadFromJSON(std::string dbPath, std::string modelName)
 {
 	tr1random = new TR1Random();
-	globalObject = new Global();
+	globalObject->setDBPath(dbPath);
+	globalObject->setModelName(modelName);
 	globalObject->brainDB.begin();
 	// begin loading JSON
-	std::string jsonfilename(std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + "serialized.json");
+	std::string jsonfilename(dbPath +  modelName + std::string("/") + "serialized.json");
 
 	boost::property_tree::ptree pt;
 	boost::property_tree::read_json(jsonfilename, pt);
@@ -235,13 +239,16 @@ Brain* Brain::loadFromJSON(void)
 	Brain* brain = globalObject->brainDB.getValue();
 	globalObject->syncpoint = globalObject->readSyncpoint();
 
+	globalObject->insert(brain);
+
 	return brain;
 }
 
-Brain *Brain::load(void)
+Brain *Brain::load(std::string dbPath, std::string modelName)
 {
 	tr1random = new TR1Random();
-	globalObject = new Global();
+	globalObject->setDBPath(dbPath);
+	globalObject->setModelName(modelName);
 	//globalObject->brainDB.begin(); 
 	long brainId = globalObject->componentBase[ComponentTypeBrain];
 	Brain *brain = globalObject->brainDB.getComponent(brainId);
@@ -300,6 +307,8 @@ Brain *Brain::load(void)
 		}
 	}
 
+	globalObject->insert(brain);
+
 	return brain;
 }
 
@@ -323,24 +332,51 @@ void Brain::adjustSynapses(void)
 {
 }
 
+// Accumulate all previous vectors up to MAX_INTERVAL_OFFSET in the past
+// and return them in a single vector
+void Brain::grabAllVectors(long cts, std::vector<TimedEvent *> *collectedVector)
+{
+	long start = cts - MAX_TIMEINTERVAL_OFFSET;
+
+	if(start < 0 )
+		start = 0;
+
+	for(long i = start;i < cts; i++)
+	{
+		long intervalOffsetValue = i % MAX_TIMEINTERVAL_BUFFER_SIZE;
+		std::vector<TimedEvent *> *teVector = &globalObject->timeIntervalEvents[intervalOffsetValue];
+		if(teVector->size()>0) 
+		{
+			collectedVector->insert(collectedVector->end(), teVector->begin(), teVector->end());
+			teVector->clear();
+		}
+	}
+}
+
 void Brain::removePreviousTimedEvents(void)
 {
 
 //	long totalEvents = globalObject->getTotalEvents();
 //	printf("removePreviousTimedEvents: Total events %ld\r", totalEvents);
+	std::vector<TimedEvent *> thisVector;
+	std::vector<TimedEvent *> *teVector = &thisVector;
 
-	size_t intervalOffsetValue = globalObject->current_timestep % MAX_TIMEINTERVAL_BUFFER_SIZE;
+	long cts = globalObject->getCurrentTimestamp();
+
+	long intervalOffsetValue = globalObject->getCurrentTimestamp() % MAX_TIMEINTERVAL_BUFFER_SIZE;
 
 //	std::cout << "removePreviousTimedEvents Locking teVector_mutex[" << intervalOffsetValue << "]" << std::endl;
 	boost::mutex::scoped_lock amx(*(globalObject->teVector_mutex[intervalOffsetValue]));
 
-	std::vector<TimedEvent *> *teVector = &globalObject->timeIntervalEvents[intervalOffsetValue];
+	//std::vector<TimedEvent *> *teVector = &globalObject->timeIntervalEvents[intervalOffsetValue];
+	// grab all previous TimeEvent vectors
+	grabAllVectors(intervalOffsetValue,teVector);
 	std::vector<TimedEvent *> newVector;
 	std::vector<TimedEvent *> oldVector;
 	for(size_t i = 0;i<teVector->size();i++)
 	{
 			TimedEvent *te = (*teVector)[i];
-			if(te->slice < globalObject->current_timestep - 4000L) { // If aged out (over 4s ago), don't keep it. 
+			if(te->slice < cts  - MAX_TIMEINTERVAL_OFFSET) { // If aged out (over 4s ago), don't keep it. 
 				oldVector.push_back(te); // Save this event
 			} 
 			else 
@@ -373,44 +409,24 @@ void Brain::removePreviousTimedEvents(void)
 void Brain::step(void)
 {
 
+	long begin = globalObject->getCurrentTimestamp();
+	long now = begin;
+
 	globalObject->cycle();
+
 
 	removePreviousTimedEvents();
 
-	globalObject->increment();
 
-//	startRealTime = boost::posix_time::microsec_clock::local_time();
-    boost::posix_time::ptime thisTime = boost::posix_time::microsec_clock::local_time();
-    boost::posix_time::time_duration duration = thisTime - globalObject->startRealTime;
 
-	long milliseconds = duration.total_milliseconds(); // + timeAdjust;
-	long waittime = (globalObject->current_timestep - milliseconds);  
-
-	if(globalObject->current_timestep > milliseconds) 
-	{
-		//printf("wait %ld\n", waittime);
-		if (waittime > STALL_OVERHEAD) {
-/*
-			if(globalObject->logEvents) 
-			{	
-				std::stringstream ss;
-				ss << "Brain_step: waittime=" << waittime;
-				globalObject->writeEventLog(ss.str().c_str());
-			}
-*/
-			boost::this_thread::sleep(boost::posix_time::milliseconds(waittime));
-/*
-			if(globalObject->logEvents) 
-			{	
-				std::stringstream ss;
-				ss << "Brain_step: waiting complete";
-				globalObject->writeEventLog(ss.str().c_str());
-			}
-*/
-		}
-	}
+//	while(begin==now) // wait until time changes
+//	{
+//		now = globalObject->getCurrentTimestamp();
+//	}
 
 //	removeDeadAPs(); // remove dead APs and unfire firing axons
+
+	globalObject->increment();
 	
 }
 
@@ -617,7 +633,7 @@ std::string Brain::getReport(void)
 //	LOGSTREAM(ss) << "APs: " << globalObject->actionPotentialsSize() << std::endl;
 //	returnString += ss.str();
 
-	long startTS = globalObject->current_timestep;
+	long startTS = globalObject->getCurrentTimestamp();
 	long endTS = startTS +  MAX_TIMEINTERVAL_BUFFER_SIZE;
 	std::string sep = "";
 	bool found = false;
@@ -707,3 +723,26 @@ void Brain::stopNeuronProcessing(void)
 {
 	neuronProcessor.stop();
 }
+
+void Brain::startTimerProcessing(void) 
+{ 
+	timerProcessor.start();
+
+}
+
+void Brain::stopTimerProcessing(void)
+{
+	timerProcessor.stop();
+}
+
+void Brain::startSNNVisualizer(void) 
+{ 
+	snnVisualizer.thisBrain = this;
+	snnVisualizer.start();
+}
+
+void Brain::stopSNNVisualizer(void)
+{
+	snnVisualizer.stop();
+}
+

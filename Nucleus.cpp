@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -96,7 +96,7 @@ Nucleus *Nucleus::create(std::string name, SpatialDetails details, int nucleusTy
 }
 
 
-void Nucleus::projectTo(Nucleus *nucleus, float sparsity)
+void Nucleus::receiveInputFrom(Nucleus *nucleus, float sparsity, float polarity)
 {
 	size_t cSize1 = columns.size();
 	size_t cSize2 = nucleus->columns.size();
@@ -118,32 +118,35 @@ void Nucleus::projectTo(Nucleus *nucleus, float sparsity)
 			else
 				col2 = globalObject->columnDB.getComponent(c2id);
 //			size_t pct = (cNumber*100) / cMax;
-//			LOGSTREAM(ss) << "      Projecting Column " << col1->id << " to " << col2->id << "... (" << cNumber++ << " of " << cMax << " - " << pct << "%) " << std::endl;
+//			LOGSTREAM(ss) << "      Column " << col1->id << " receiving input from " << col2->id << "... (" << cNumber++ << " of " << cMax << " - " << pct << "%) " << std::endl;
 //			globalObject->log(ss);
 
-			col1->projectTo(col2,sparsity);
+			col1->receiveInputFrom(col2,sparsity,polarity);
 		}
 	}
 }
 
-void Nucleus::cycle(void)
+long Nucleus::getStartNeuron(void)
 {
 	size_t cSize = columns.size();
-	for(size_t i=0;i<cSize;i++)
-	{
-		Column *c = globalObject->columnDB.getComponent(columns[i]);
-		c->cycle();
-	}
-/*
-	CollectionIterator<Column *> itColumn(&columns);
-	for (itColumn.begin(); itColumn.more(); itColumn.next())
-	{
-		itColumn.value()->cycle();
-	}
-*/
-//	std::cout << "Nucleus " << this->id << " cycled." << std::endl;
+	if(cSize==0)
+		return 0;
+
+	long cId = columns[0];
+	Column *col = globalObject->columnDB.getComponent(cId);
+	return col->getStartNeuron();
 }
 
+long Nucleus::getEndNeuron(void)
+{
+	size_t cSize = columns.size();
+	if(cSize==0)
+		return 0;
+
+	long cId = columns[cSize-1];
+	Column *col = globalObject->columnDB.getComponent(cId);
+	return col->getEndNeuron();
+}
 
 Nucleus *Nucleus::instantiate(long key, size_t len, void *data)
 {
@@ -226,66 +229,37 @@ Tuple *Nucleus::getImage(void)
 
 	return tuple;
 }
-/*
-void Nucleus::addColumns(size_t colCount, size_t clusterCount, size_t neuronCount)
-{
-	for(size_t i=0;i<colCount;i++) 
-	{
-		SpatialDetails sd(this->location, this->area);
-		sd.randomizeLocation();
-
-		Column *c = Column::create(sd,this->id);
-		size_t lSize = c->layers.size();
-		for(size_t k1=0;k1<lSize;k1++)
-		{
-			Layer *layer = globalObject->layerDB.getComponent(c->layers[k1]);
-			for(size_t i5=0;i5<clusterCount;i5++) 
-			{
-				SpatialDetails sdc(sd);
-				sdc.randomizeLocation();
-
-				Cluster *cl = Cluster::create(sdc,this->id);
-				cl->parentId = this->id;
-				for(size_t i6=0;i6<neuronCount;i6++) 
-				{
-					Neuron *neur = Neuron::create(sdc, Pyramidal,cl->id, this->nucleusType);
-					cl->getNeurons().push_back(neur->id);
-					cl->setDirty();
-				}
-				layer->clusters.push_back(cl->id);
-				layer->setDirty();
-			}
-		}
-		columns.push_back(c->id);
-	}
-	setDirty(true);
-}
-*/
 
 void Nucleus::addColumns(size_t colCount, size_t layerCount, size_t clusterCount, size_t neuronCount)
 {
 	for(size_t i=0;i<colCount;i++) 
 	{
-		SpatialDetails sd(this->location, this->area);
-		sd.randomizeLocation();
-
-		Column *c = Column::create(sd,layerCount, this->id);
+		SpatialDetails sdr(this->location, this->area);
+		sdr.randomizeLocation();
+		Column *c = Column::create(sdr,layerCount, this->id);
 		size_t lSize = c->layers.size();
 		for(size_t k1=0;k1<lSize;k1++)
 		{
 			Layer *layer = globalObject->layerDB.getComponent(c->layers[k1]);
 			for(size_t i5=0;i5<clusterCount;i5++) 
 			{
-				SpatialDetails sdc(sd);
-				sdc.randomizeLocation();
 
-				Cluster *cl = Cluster::create(sdc,this->id);
+				Cluster *cl = Cluster::create(sdr,this->id);
 				cl->parentId = this->id;
+				float offset = (float) ((abs(area.h) / layerCount) / 2);
 				for(size_t i6=0;i6<neuronCount;i6++) 
 				{
-					Neuron *neur = Neuron::create(sdc, Pyramidal,cl->id, this->nucleusType);
+					float newX = sdr.location.x + ((float)(tr1random->generate(1, (int)abs(area.w))));
+					float newY = sdr.location.y+(offset*(float)k1);
+					float newZ = sdr.location.z + ((float)(tr1random->generate(1, (int)abs(area.d))));
+					Location3D loc2(newX,newY,newZ);
+					SpatialDetails sdd(loc2,this->area);
+					Neuron *neur = Neuron::create(sdd, Pyramidal,cl->id, this->nucleusType);
 					cl->getNeurons().push_back(neur->id);
 					cl->setDirty();
+
+//					std::cout << "Neuron (" << sdd.location.x << "," << sdd.location.y << "," << sdd.location.z << "), ";
+//					std::cout << this->name << " (" << this->location.x << "," << this->location.y << "," << this->location.z << ") " << std::endl;
 				}
 				layer->clusters.push_back(cl->id);
 				layer->setDirty();
@@ -295,41 +269,3 @@ void Nucleus::addColumns(size_t colCount, size_t layerCount, size_t clusterCount
 	}
 	setDirty(true);
 }
-/*
-void Nucleus::addColumns(size_t colCount, ColumnNeuronProfile &cProfile)
-{
-	for(size_t i=0;i<colCount;i++) 
-	{
-		SpatialDetails sd(this->location, this->area);
-		sd.randomizeLocation();
-
-		Column *c = Column::create(sd,this->id);
-		size_t lSize = c->layers.size();
-		for(size_t k1=0;k1<lSize;k1++)
-		{
-			Layer *layer = globalObject->layerDB.getComponent(c->layers[k1]);
-			NeuronMorphology *neuronMorphology = cProfile.neuronMorphology[k1];
-			for(size_t i5=0;i5<neuronMorphology->clusterCount;i5++) 
-			{
-				SpatialDetails sdc(sd);
-				sdc.randomizeLocation();
-
-				Cluster *cl = Cluster::create(sdc,this->id);
-				for(size_t i6=0;i6<neuronMorphology->clusterSize;i6++) 
-				{
-					SpatialDetails sdn(sdc);
-					sdn.randomizeLocation();
-
-					Neuron *neur = Neuron::create(sdn,neuronMorphology->type, cl->id,this->nucleusType);
-					cl->getNeurons().push_back(neur->id);
-					cl->setDirty();
-				}
-				layer->clusters.push_back(cl->id);
-				layer->setDirty();
-			}
-		}
-		columns.push_back(c->id);
-	}
-	setDirty(true);
-}
-*/
