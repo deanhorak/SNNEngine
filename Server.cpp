@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -294,7 +294,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 			returnString += lookupNucleusName+" not found";
 			return returnString;
 		} else if(command == "SETACTIVATION") {
-			LOGSTREAM(ss) << "SETACTIVATION Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+			LOGSTREAM(ss) << "SETACTIVATION Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 			globalObject->log(ss);
 
 			std::string returnString;
@@ -329,7 +329,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 			returnString = "SETACTIVATION Command complete";
 			return returnString;
 		} else if(command == "GETACTIVATION") {
-			LOGSTREAM(ss) << "GETACTIVATION Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+			LOGSTREAM(ss) << "GETACTIVATION Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 			globalObject->log(ss);
 
 			std::string returnString;
@@ -365,12 +365,12 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 				}
 			}
 
-			LOGSTREAM(ss) << "GETACTIVATION return string [" << returnString << "] at timestep " << globalObject->current_timestep << "." << std::endl;
+			LOGSTREAM(ss) << "GETACTIVATION return string [" << returnString << "] at timestep " << globalObject->getCurrentTimestamp() << "." << std::endl;
 			globalObject->log(ss);
 
 			return returnString;
 		} else if(command == "GETACTIVENEURONS") {
-			LOGSTREAM(ss) << "GETACTIVENEURONS Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+			LOGSTREAM(ss) << "GETACTIVENEURONS Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 			globalObject->log(ss);
 			// get the region and nucleus names
 			std::string returnString("NEURONS=");
@@ -454,7 +454,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 						}
 					}
 //					LOGSTREAM(ss) << "Sending Response [" << returnString << "], " << returnString.size() << " bytes." << std::endl;
-					LOGSTREAM(ss) << "Sending Response of " << returnString.size() << " bytes at timestep " << globalObject->current_timestep << "." << std::endl;
+					LOGSTREAM(ss) << "Sending Response of " << returnString.size() << " bytes at timestep " << globalObject->getCurrentTimestamp() << "." << std::endl;
 					globalObject->log(ss);
 //					strncpy(sendbuf,returnString.c_str(),sendbuflength);
 					return returnString;
@@ -466,7 +466,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 			returnString += lookupNucleusName+" not found";
 			return returnString;
 		} else if(command == "SETACTIVATIONPATTERN") {
-//			LOGSTREAM(ss) << "SETACTIVATIONPATTERN Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+//			LOGSTREAM(ss) << "SETACTIVATIONPATTERN Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 //			globalObject->log(ss);
 
 			std::string returnString;
@@ -508,7 +508,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 								globalObject->writeEventLog(ss.str().c_str());
 							}
 							//neuron->fire();
-							neuron->potential = 3.0;
+							neuron->setMembranePotential(3.0);
 						}
 					} 
 				}
@@ -518,7 +518,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 			return returnString;
 		}
 		else if (command == "GETACTIVATIONPATTERN") {
-//			LOGSTREAM(ss) << "GETACTIVATIONPATTERN Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+//			LOGSTREAM(ss) << "GETACTIVATIONPATTERN Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 //			globalObject->log(ss);
 
 			std::string returnString("");
@@ -559,7 +559,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 //			returnString = "SETACTIVATIONPATTERN Command complete";
 			return returnString;
 		} else if(command == "STARTATOMIC") { // STARTATOMIC command requires an argument (TRUE or FALSE)...
-			LOGSTREAM(ss) << "STARTATOMIC Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+			LOGSTREAM(ss) << "STARTATOMIC Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 			globalObject->log(ss);
 
 			char *bufStart = space;
@@ -592,7 +592,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 			return returnString;
 		}
 		else if (command == "FLUSH") { // FLUSH command requires no argument
-		LOGSTREAM(ss) << "FLUSH Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+		LOGSTREAM(ss) << "FLUSH Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 		globalObject->log(ss);
 
 		globalObject->flush(); // flush all databases - persist all Databases to disc
@@ -602,7 +602,7 @@ std::string Server::parseAndRespondText(char *buffer, int length)
 
 		return returnString;
 		} else if(command == "REPORT") { // REPORT command requires a dummy argument which is ignored...
-			LOGSTREAM(ss) << "REPORT Command recognized at timestep " << globalObject->current_timestep << ": " << std::endl;
+			LOGSTREAM(ss) << "REPORT Command recognized at timestep " << globalObject->getCurrentTimestamp() << ": " << std::endl;
 			globalObject->log(ss);
 
 			char *bufStart = space;

@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/local/BerkeleyDB.18.1/include",
-                "/usr/include"
+                "/usr/include",
+                "/usr/include/opencv4"
             ],
             "defines": [
                 "HAVE_CXX_STDHEADERS"

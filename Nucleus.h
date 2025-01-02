@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -28,6 +28,9 @@
 #include "Size3D.h"
 #include "SpatialDetails.h"
 
+// polarity - defined here because for some reason it can't see it in Global.h
+#define EXCITATORY_SYNAPSE 1.0f
+#define INHIBITORY_SYNAPSE -1.0f
 
 class Nucleus: public NNComponent
 {
@@ -59,16 +62,15 @@ public:
 	static Nucleus *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);
 
-//	void connectTo(Nucleus *nucleus);
-	void projectTo(Nucleus *nucleus, float sparsity=100.0f);
-	void cycle(void);
+	void receiveInputFrom(Nucleus *nucleus, float sparsity=100.0f, float polarity=EXCITATORY_SYNAPSE);
 
-//	void addColumns(size_t colCount, size_t clusterCount, size_t neuronCount);
 	void addColumns(size_t colCount, size_t layerCount, size_t clusterCount, size_t neuronCount);
-//	void addColumns(size_t colCount, ColumnNeuronProfile &cProfile);
 
 	void toJSON(std::ofstream& outstream);
 
+
+	long getStartNeuron(void);
+	long getEndNeuron(void);
 
 	std::string name;
 

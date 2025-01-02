@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -24,6 +24,12 @@
 #include <vector>
 #include "Neuron.h"
 
+
+// polarity - defined here because for some reason it can't see it in Global.h
+#define EXCITATORY_SYNAPSE 1.0f
+#define INHIBITORY_SYNAPSE -1.0f
+
+
 class Cluster: public NNComponent
 {
     friend class boost::serialization::access;
@@ -45,12 +51,14 @@ public:
 	static Cluster *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);
 
-//	void connectTo(Cluster *cluster);
-	void projectTo(Cluster *cluster, float sparsity=100.f, float polarity=1.0);
-	void cycle(void);
+	void receiveInputFrom(Cluster *cluster, float sparsity=100.f, float polarity=EXCITATORY_SYNAPSE);
 	std::vector<long> &getNeurons() { return this->neurons; }
 
 	void toJSON(std::ofstream& outstream);
+
+	long getStartNeuron(void);
+	long getEndNeuron(void);
+
 
 	std::vector<long> neurons;
 

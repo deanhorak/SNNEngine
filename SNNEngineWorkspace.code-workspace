@@ -97,7 +97,10 @@
 			"__bit_reference": "cpp",
 			"__functional_base": "cpp",
 			"__memory": "cpp",
-			"__locale": "cpp"
+			"__locale": "cpp",
+			"charconv": "cpp",
+			"span": "cpp",
+			"format": "cpp"
 		}
 	}
 }

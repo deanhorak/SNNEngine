@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -24,6 +24,7 @@
 #include "Axon.h"
 #include "Dendrite.h"
 
+extern long REFACTORY_PERIOD;
 
 ActionPotential::ActionPotential(Process *p): 
 	NNComponent(ComponentTypeActionPotential)
@@ -45,8 +46,14 @@ ActionPotential *ActionPotential::create(Process *p)
 // Compute the offset into the future (in ms) from current position along axon and speed (rate). 
 long ActionPotential::computeOffset(float position, float rate) 
 {
-	long offset = (long)(position * rate);
+	long offset = position + (long)((position * rate) * AP_OFFSET_RATE);
 	if(offset>MAX_TIMEINTERVAL_OFFSET)
 		offset = MAX_TIMEINTERVAL_OFFSET;
+
+
+	// DSH Hack for experiment
+	offset = offset / 50;  // cut the response time down a bit
+
+	//std::cout << "Computed offset "	<< offset << " from position " << position << ", rate " << rate << std::endl;
 	return offset;
 }

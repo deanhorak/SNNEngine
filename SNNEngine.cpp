@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -34,10 +34,13 @@
 // #define the two following only in one source file prior to the #includes for Global and TR1Random
 #define noexternglobal 1
 #define noexterntr1random 1
+#include "SNNEngine.h"
 #include "Global.h"
 #include "TR1Random.h"
+#include "SNNVisualizer.h"
 Global *globalObject;				// Global object
 TR1Random *tr1random;		// TR1 Random object
+SNNVisualizer *snnVisualizer;
 Brain *brain;
 bool keepRunning = true;
 bool stillRunning = true;
@@ -46,17 +49,9 @@ bool stillRunning = true;
 
 
 #include "Brain.h"
-#include "BrainDemo.h"
-#include "BrainDemo1.h"
-#include "BrainDemo2.h"
-#include "BrainDemo3.h"
-#include "BrainDemo4.h"
-#include "BrainDemo5.h"
-#include "BrainDemo6.h"
-#include "BrainDemoHWRecognition.h"
-#include "BrainDemoSimple.h"
 #include "DetailTest.h"
 #include "BrainDemoTiny.h"
+#include "BrainUnitTest.h"
 
 #include "ComponentCollection.h"
 
@@ -64,13 +59,13 @@ bool stillRunning = true;
 // example JSON format is { "command": "SETVALUE", "name": "FIRING_WINDOW", "value": 10 }
 
 // set initial FIRING WINDOW to slightly longer than refactory period
-long FIRING_WINDOW = 200;
+long FIRING_WINDOW = 10;
 
-long PROPAGATION_DELAY_MICROSECONDS = 50;
+long PROPAGATION_DELAY_MICROSECONDS = 10;
 
-float DECAY_FACTOR = 0.01f;
+double DECAY_FACTOR = 0.01;
 
-long REFACTORY_PERIOD = 100;
+long REFACTORY_PERIOD = 20;
 
 // WEIGHT_GRADATION is used to slow the rate of change for weight over time (defined by n updates)
 float WEIGHT_GRADATION = 100000.0f;
@@ -96,37 +91,39 @@ void mainRoutine(void)
     std::cout << "SNNEngine.mainRoutine thread is " << tid << std::endl;
 
 	std::stringstream ss;
+/*	
 	bool rebuildFromScratch = false;
 	bool rebuildFromJSON = false;
-	std::string syncfilename(std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + "syncpoint.txt");
-	std::string jsonfilename(std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + "serialized.json");
+	std::string syncfilename(std::string(globalObject->getDBPath()) +  globalObject->getModelName() + std::string("/") + "syncpoint.txt");
+	std::string jsonfilename(std::string(globalObject->getDBPath()) +  globalObject->getModelName() + std::string("/") + "serialized.json");
 
 	rebuildFromScratch = !exists(syncfilename);
 	//rebuildFromJSON = exists(jsonfilename);
 	rebuildFromJSON = false;
 	if (rebuildFromJSON) {
-		brain = BRAINDEMO::createFromJSON();
+		brain = MODEL_IMPLEMENTATION_CLASS::createFromJSON();
 	}
 	else {
-		brain = BRAINDEMO::create(rebuildFromScratch);
+		brain = MODEL_IMPLEMENTATION_CLASS::create(rebuildFromScratch);
 	}
-
-	LOGSTREAM(ss) << "Starting background thread..." << std::endl;
+*/
+	LOGSTREAM(ss) << "Starting background threads..." << std::endl;
 	globalObject->log(ss);
 
 	brain->startServer();
 	brain->startNeuronProcessing();
+	brain->startTimerProcessing();
 
 	bool showStatus = false;
-	//	while(globalObject->current_timestep<10000)
+	//	while(globalObject->getCurrentTimestamp()<10000)
 
 	globalObject->startRealTime = boost::posix_time::microsec_clock::local_time();
 	
 	while (keepRunning)
 	{
 
-		brain->step();
-		BRAINDEMO::step(brain);
+//		brain->step();
+//		MODEL_IMPLEMENTATION_CLASS::step(brain);
 
 		std::string msg = globalObject->getMessage();
 		if (!msg.empty())
@@ -172,7 +169,7 @@ void mainRoutine(void)
 				// show time
 				boost::posix_time::ptime nowTime = boost::posix_time::microsec_clock::local_time();
 				boost::posix_time::time_duration msdiff = nowTime - globalObject->startRealTime;
-				long ct = globalObject->current_timestep;
+				long ct = globalObject->getCurrentTimestamp();
 				long elapse = (long)msdiff.total_milliseconds() - brain->timeAdjust;
 				float rate = (float)elapse / (float)ct;
 				printf("timeslices %ld, elaspsed ms %ld, rate %f \n", ct, elapse, rate);
@@ -184,7 +181,7 @@ void mainRoutine(void)
 				boost::posix_time::ptime nowTime = boost::posix_time::microsec_clock::local_time();
 				boost::posix_time::time_duration msdiff = nowTime - globalObject->startRealTime;
 				long elapse = (long)msdiff.total_milliseconds();
-				brain->timeAdjust = elapse - globalObject->current_timestep;
+				brain->timeAdjust = elapse - globalObject->getCurrentTimestamp();
 				printf("timeAdjust set to %ld \n", brain->timeAdjust);
 			}
 			if (msg.substr(0,7) == "excite ") {
@@ -205,7 +202,7 @@ void mainRoutine(void)
 		}
 
 		if (showStatus) {
-			unsigned long ts = globalObject->current_timestep;
+			unsigned long ts = globalObject->getCurrentTimestamp();
 			int intervalOffsetValue = ts % MAX_TIMEINTERVAL_BUFFER_SIZE;
 			std::cout << "mainroutine Locking teVector_mutex[" << intervalOffsetValue << "]" << std::endl;
 			boost::mutex::scoped_lock amx(*(globalObject->teVector_mutex[intervalOffsetValue]));
@@ -220,7 +217,7 @@ void mainRoutine(void)
 
 
 
-	LOGSTREAM(ss) << "Shutdown detected during simulation at timestep " << globalObject->current_timestep << "..." << std::endl;
+	LOGSTREAM(ss) << "Shutdown detected during simulation at timestep " << globalObject->getCurrentTimestamp() << "..." << std::endl;
 	globalObject->log(ss);
 
 	brain->stopNeuronProcessing();
@@ -237,14 +234,46 @@ void mainRoutine(void)
 }
 
 
-int main()
+//int main(int argc, char *argv[])
+void SNNEngine::initialize(std::string dbPath, std::string modelName)
 {
 	std::stringstream ss;
+
+	globalObject = new Global(dbPath,modelName);
+
 
 	LOGSTREAM(ss) << "Begin execution..." << std::endl;
 	globalObject->log(ss);
 
+	bool rebuildFromJSON = false;
+	globalObject->setModelName(modelName);
+	globalObject->setDBPath(dbPath);
+	std::string jsonfilename(dbPath +  modelName + std::string("/") + "serialized.json");
+
+	std::string syncfilename(dbPath +  modelName + std::string("/") + "syncpoint.txt");
+	bool rebuildFromScratch = !exists(syncfilename);
+
+	//rebuildFromJSON = exists(jsonfilename);
+	rebuildFromJSON = false;
+	if (rebuildFromJSON) {
+		brain = MODEL_IMPLEMENTATION_CLASS::createFromJSON();
+		globalObject->readCounters();
+	}
+	else {
+		brain = MODEL_IMPLEMENTATION_CLASS::create(rebuildFromScratch);
+	}
+
+	globalObject->writeCounters();
+
+}
+
+void SNNEngine::startEngine(void)
+{
+	std::stringstream ss;
+
+
 	boost::thread t(&mainRoutine);
+
 
 	std::locale loc;
 	std::string command("");
@@ -252,6 +281,15 @@ int main()
 
 	LOGSTREAM(ss) << "Command line ready for input (x to terminate)..." << std::endl;
 	globalObject->log(ss);
+
+	SNNVisualizer *sv = new SNNVisualizer();
+	sv->thisBrain = brain;
+
+	LOGSTREAM(ss) << "Starting SNNVisualizer thread..." << std::endl;
+	globalObject->log(ss);
+
+	globalObject->brain->startSNNVisualizer();
+
 
 	while (!exit)
 	{
@@ -363,6 +401,6 @@ int main()
 	LOGSTREAM(ss) << "Main: thread ended..." << std::endl;
 	globalObject->log(ss);
 
-	return 0;
+	return;
 }
 

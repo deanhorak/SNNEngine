@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -26,40 +26,41 @@
 
 class Synapse;
 class Neuron;
+
 class Dendrite: public Process
 {
-	Dendrite(void);
-	Dendrite(Neuron *neuron, float polarity);
-	Dendrite(Neuron *neuron, long newId,float polarity);
+    Dendrite(void);
+    Dendrite(Neuron *neuron, long newId,float polarity);
+
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const size_t version)
-	{
-		ar & boost::serialization::base_object<NNComponent>(*this);
+    {
+        ar & boost::serialization::base_object<NNComponent>(*this);
         ar & preSynapticNeuronId;
-		ar & synapseId;
-	}
+        ar & synapseId;
+    }
 
 public:
-	virtual ~Dendrite(void);
-	static Dendrite *create(Neuron *postSynapticNeuron,Neuron *preSynapticNeuron, float polarity);
-	void fire(void);
-	Tuple *getImage(void);
-	static Dendrite *instantiate(long key, size_t len, void *data);
+    virtual ~Dendrite(void);
+    static Dendrite *create(Neuron *postSynapticNeuron,Neuron *preSynapticNeuron, float polarity);
+    void fire(void);
+    Tuple *getImage(void);
+    static Dendrite *instantiate(long key, size_t len, void *data);
 
-	inline bool isSameNeuron(long nid) { return preSynapticNeuronId == nid; };
-	inline void setPreSynapticNeuronId(long nId) { this->preSynapticNeuronId = nId; };
-	inline long getPreSynapticNeuronId(void) { return this->preSynapticNeuronId; };
-	inline void setPostSynapticNeuronId(long nId) { this->postSynapticNeuronId = nId; };
-	inline long getPostSynapticNeuronId(void) { return this->postSynapticNeuronId; };
-	inline long getSynapseId(void) { return synapseId; };
-	void toJSON(std::ofstream& outstream);
-
+    inline bool isSameNeuron(long nid) { return preSynapticNeuronId == nid; };
+    inline void setPreSynapticNeuronId(long nId) { this->preSynapticNeuronId = nId; };
+    inline long getPreSynapticNeuronId(void) { return this->preSynapticNeuronId; };
+    inline void setPostSynapticNeuronId(long nId) { this->postSynapticNeuronId = nId; };
+    inline long getPostSynapticNeuronId(void) { return this->postSynapticNeuronId; };
+    inline long getSynapseId(void) { return synapseId; };
+    void toJSON(std::ofstream& outstream);
 
 private:
-	void save(void);
-	void commit(void);
-	long preSynapticNeuronId;
-	long postSynapticNeuronId;
-	long synapseId;
+    void save(void);
+    void commit(void);
+
+    long preSynapticNeuronId;
+    long postSynapticNeuronId;
+    long synapseId;
 };

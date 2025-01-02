@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -44,7 +44,8 @@ namespace simple_http_server {
 
 // Maximum size of an HTTP message is limited by how much bytes
 // we can read or send via socket each time
-constexpr size_t kMaxBufferSize = 65535;
+#define MEGABYTE 1024*1024;
+constexpr size_t kMaxBufferSize = 100 * MEGABYTE; // 100MB
 
 struct EventData {
   EventData() : fd(0), length(0), cursor(0), buffer() {}

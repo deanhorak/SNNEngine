@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -56,7 +56,7 @@ template <class a_Type> class ComponentDB
 //	boost::mutex db_putmutex;
 
 public:
-	ComponentDB(const size_t cacheSize=5000)
+	ComponentDB(const size_t cacheSize,std::string inDBPath, std::string inModelName)
    : db_(NULL, 0),               // Instantiate Db object
 	maxCacheSize(cacheSize),
 	cFlags_(DB_CREATE)          // If the database doesn't yet exist, allow it to be created.
@@ -74,9 +74,9 @@ public:
 			db_.set_error_stream(&std::cerr);
 			db_.set_cachesize(0, 8 * 1024*1024,4); // Set cachesize to 8MB (4 caches of 2MB each - 8MB total)
 			std::string typeidName(lastToken(typeid(a_Type).name()));
-			std::string demoname(BRAINDEMONAME);
+			std::string demoname(inModelName);
 
-			std::string directoryPath(std::string(DB_PATH) +  BRAINDEMONAME);
+			std::string directoryPath(inDBPath +  inModelName);
 			// Test for the presence of the directory and create it if not present. 
 
 			// Check if the directory exists
@@ -97,7 +97,7 @@ public:
         		}
     		}
 
-			dbFileName_ = std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + demoname + std::string("_") + typeidName + std::string(".db"); 
+			dbFileName_ = inDBPath +  inModelName + std::string("/") + demoname + std::string("_") + typeidName + std::string(".db"); 
 
 			// Open the database
 			db_.open(NULL, dbFileName_.c_str(), NULL, DB_BTREE, cFlags_, 0);

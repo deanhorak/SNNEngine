@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -67,7 +67,7 @@ public:
 		for(size_t i=0;i<cacheSize;i++)
 		{
 			cacheIndex[i] = i;
-			cacheTimestamp[i] = globalObject->current_timestep;
+			cacheTimestamp[i] = globalObject->getCurrentTimestamp();
 //			file.seekp(offset,ios::beg);
 			file.read(cache+(offset*elementSize), elementSize);
 		}

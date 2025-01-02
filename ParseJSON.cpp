@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -29,17 +29,16 @@
 using json = nlohmann::json;
 
 Brain* brainPtr = NULL;
-Brain* ParseJSON::loadFromJSON(void)
+Brain* ParseJSON::loadFromJSON(std::string dbPath, std::string modelName)
 {
 
 	tr1random = new TR1Random();
-	globalObject = new Global();
 	globalObject->brainDB.begin();
-    Brain *brain = Brain::create(false);
+	Brain *brain = Brain::create(false,"../../../database/","DetailTest");
     brainPtr = brain;
 
 	// begin loading JSON
-	std::string jsonfilename(std::string(DB_PATH) +  BRAINDEMONAME + std::string("/") + "serialized.json");
+	std::string jsonfilename(std::string(globalObject->getDBPath()) +  globalObject->getModelName() + std::string("/") + "serialized.json");
 
     // define parser callback
     json::parser_callback_t cb = [](int depth, json::parse_event_t event, json& parsed)

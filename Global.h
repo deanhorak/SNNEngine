@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -22,26 +22,76 @@
 #pragma once
 
 //
-//#define BRAINDEMO BrainDemoSimple
-//#define BRAINDEMONAME "BrainDemoSimple"
-//#define BRAINDEMO BrainDemo
-//#define BRAINDEMONAME "BrainDemo"
-//#define DB_PATH "../database/"
-//#define BRAINDEMO BrainDemo6
-//#define BRAINDEMONAME "BrainDemo6"
+// You can define your MODEL_IMPLEMENTATION_CLASS here if needed.
+// #define MODEL_IMPLEMENTATION_CLASS BrainDemoTiny
 
-#define BRAINDEMO BrainDemoTiny
-#define BRAINDEMONAME "BrainDemoTiny"
+#define MODEL_IMPLEMENTATION_CLASS BrainDemoTiny
 
-#define DB_PATH "../../../database/"
+#define DB_PATH globalObject->getDBPath()
 #define LOGGING_PATH "/mnt/nas8t/SNNLogs/"
-
 
 enum LayerType {input, output};
 
+// Default simulation parameters
+#define MAX_TIMEINTERVAL_BUFFER_SIZE 100000
+#define MAX_TIMEINTERVAL_OFFSET 5000
+#define MAX_THREADPOOL_SIZE 20
+#define THREADPOOL_SLICE_THRESHOLD 1000 
 
-//#define BRAINDEMO DetailTest
-//#define BRAINDEMONAME "DetailTest"
+// cap on number of APs before slowing down - twice as many as synapses
+#define MAX_ACTIVE_ACTIONPOTENTIALS (globalObject->synapsesSize()*2) 
+
+// rate for computing offset offset = position + (long)((position * rate) * AP_OFFSET_RATE);
+#define AP_OFFSET_RATE 0.01f
+
+
+// Conversions
+#define MICROSECONDS 1
+#define MILLISECONDS 1000
+#define SECONDS 1000000
+
+// Neural parameters
+#define RESTING_POTENTIAL -65.0f
+#define INITIAL_THRESHOLD -50.0f
+#define INITIAL_LEARNING_RATE 10.0f
+#define MAXIMUM_SYNAPSE_WEIGHT 65.0f
+#define MINIMUM_SYNAPSE_WEIGHT -65.0f
+#define MAXIMUM_AXON_RATE 1.0f
+#define MAXIMUM_DENDRITE_RATE 1.0f
+#define MINIMUM_MEMBRANE_POTENTIAL -65.f
+#define MAXIMUM_MEMBRANE_POTENTIAL 130.f
+
+// Default rates and distances
+#define DEFAULT_AXON_RATE 1000.0f
+#define DEFAULT_AXON_DISTANCE 1000.0f
+#define DEFAULT_AXON_DISTANCE_STEP 0.2f
+#define DEFAULT_DENDRITE_RATE 1.0f
+#define DEFAULT_DENDRITE_DISTANCE 1000.0f
+#define DEFAULT_DENDRITE_DISTANCE_STEP 0.2f
+#define DEFAULT_STDP_RATE 1.25f
+#define DEFAULT_SYNAPSE_POSITION 500.0
+
+// STDP tuning constants (new)
+#define A_PLUS 1.0f
+#define A_MINUS -0.8f
+#define TAU_PLUS 10.0f
+#define TAU_MINUS 10.0f
+
+// Homeostatic plasticity parameters (new)
+#define HOMEOSTASIS_TARGET_RATE 0.1f
+#define HOMEOSTASIS_ADJUST_FACTOR 0.001f
+
+// Membrane potential decay (leaky integrate-and-fire) (new)
+#define LEAK_FACTOR 0.99f
+
+// Synaptic scaling factor applied after STDP (new)
+#define SYNAPTIC_SCALING_FACTOR 1.0f
+
+// Growth of dendrites disabled for now
+#define GROW_DENDRITES false
+
+#define EXCITATORY 1.0f
+#define INHIBITORY -1.0f
 
 #include <stdio.h>
 #include <map>
@@ -49,14 +99,14 @@ enum LayerType {input, output};
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
+#include <queue>
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
-//#include <boost/json.hpp>
-
-//#include <vld.h>
-
+#include <cmath>
+#include <fstream>
 
 #include "NNComponent.h"
 #include "Brain.h"
@@ -74,186 +124,141 @@ enum LayerType {input, output};
 #include "CollectionIterator.h"
 #include "ComponentDB.h"
 #include "Location3D.h"
-// Size of timeinterval (# of ms slots)
-#define MAX_TIMEINTERVAL_BUFFER_SIZE 10000
+#include "Range.h"
+#include "FloatTuple.h"
 
-// Max offset for new APs 
-#define MAX_TIMEINTERVAL_OFFSET 500
-// number of threads in pool
-#define MAX_THREADPOOL_SIZE 20
-// threshold at which we'll divide the work up among MAX_THREADPOOL_SIZE threads
-#define THREADPOOL_SLICE_THRESHOLD 400 
-// cap on number of APs before slowing down
-#define MAX_ACTIVE_ACTIONPOTENTIALS 20000000 // 20 million
-// initial axon rate
-#define DEFAULT_AXON_RATE 0.01f
-// axon rate change step
-#define DEFAULT_AXON_RATE_STEP 0.001f
-// initial dendrite rate
-#define DEFAULT_DENDRITE_RATE 0.01f
-// dendrite rate change step
-#define DEFAULT_DENDRITE_RATE_STEP 0.001f
-// Default beginning dendrite distance
-#define DEFAULT_DENDRITE_DISTANCE 100
-// Default dendrite distance step
-#define DEFAULT_DENDRITE_DISTANCE_STEP 0.3
-// weight change rate for STDP
-#define DEFAULT_STDP_RATE 1.25f
+#define STALL_OVERHEAD 100
 
-// time conversion factors for calls requiring microseconds
-// Microsecond is 1/1,000,000th of a second
-#define MICROSECONDS 1
-// Millisecond is 1,000 microseconds
-#define MILLISECONDS 1000
-// Second is 1,000,000 microseconds 
-#define SECONDS 1000000
-// resting potential
-#define RESTING_POTENTIAL -65.0f
-// initial learning rate
-#define INITIAL_LEARNING_RATE 10.0f
-// maximum synapse weight
-#define MAXIMUM_SYNAPSE_WEIGHT 65.0f
-// maximum rate for axon
-#define MAXIMUM_AXON_RATE 1.0f
-// maximum rate for dendrite
-#define MAXIMUM_DENDRITE_RATE 1.0f
-// enable the growth of new dendrites
-#define GROW_DENDRITES false
-// polarity
-#define EXCITATORY 1.0f
-#define INHIBITORY -1.0f
+extern class Global *globalObject;
 
-
-#define LOGSTREAM(s) s.str(""); s.clear(); s 
-
-
-// #define u_int32_t uint32_t
 
 class Global
 {
 private:
+    long timeEventsCounter = 0L;
+    std::map<unsigned long,Neuron *> firedNeurons;
 
 public:
+    boost::mutex xThreadQueue_mutex;
+    boost::mutex log_event_mutex;
+    boost::mutex neuron_cycle_mutex;
+    boost::mutex inference_mutex;
+    boost::mutex timestamp_mutex;
+    boost::mutex firedneuron_mutex;
 
-	boost::mutex xThreadQueue_mutex;
-	boost::mutex log_event_mutex;
-	boost::mutex neuron_cycle_mutex;
-	boost::mutex inference_mutex;
+    std::string modelName;
+    std::string dbPath;
 
-	std::queue<std::string> xThreadQueue;
+    std::queue<std::string> xThreadQueue;
 
-	bool logResponseMode = false;
+    bool logResponseMode = false;
 
-	Global(void);
-	virtual ~Global(void);
-	void increment(void);
-	void addTimedEvent(TimedEvent* te);
-	long nextComponent(ComponentType type);
-	void runInference(void);
-	void runLearning(void);
-	void cycle(void);
-	void cycleNeurons(void);
-	void inferenceSlice(std::vector<TimedEvent*>* teVector, size_t start, size_t count, bool display, size_t intervalOffsetValue);
-	void flush(void);
-	void flushAll(void);
-	void shutdown(void);
-	void log(char *str);
-	void log(std::stringstream &ss);
-	void logFiring(Neuron *n,bool firestatus);
+    std::string lastImageString;
 
-	long batchFire(std::vector<Neuron *> *firingNeurons);
+    Global(std::string inDBPath, std::string inModelName);
+    virtual ~Global(void);
 
-	float euclideanDistance(const std::vector<float>& a, const std::vector<float>& b);
-	std::map<int, float> clusterPatterns(const std::vector<std::vector<float>> &patterns, int numClusters, int vectorLength);
+    std::string getModelName(void) { return modelName; };
+    void setModelName(std::string inModelName) { modelName = inModelName; };
+    std::string getDBPath() { return dbPath; };
+    void setDBPath(std::string inDBPath) { dbPath = inDBPath; };
 
-	Dendrite *findConnectingDendrite(Neuron *neuronA, Neuron *neuronB);
-	long getTotalEvents(void);
+    void step(void);
+    void increment(void);
+    void addTimedEvent(TimedEvent* te);
+    long nextComponent(ComponentType type);
+    void runInference(void);
+    void runLearning(void);
+    void cycle(void);
+    void inferenceSlice(std::vector<TimedEvent*>* teVector, size_t start, size_t count, bool display, size_t intervalOffsetValue);
+    void flush(void);
+    void flushAll(void);
+    void shutdown(void);
+    void log(char *str);
+    void log(std::stringstream &ss);
+    void logFiring(Neuron *n,bool firestatus);
+    void writeCounters(void);
+    void readCounters(void);
 
-	void debug(char *str);
-	void debug(std::stringstream &ss);
+    Range batchFire(std::vector<Neuron *> *firingNeurons, long waitPeriod=0);
+    Range batchLearn(std::vector<Neuron *> *inputNeurons, std::vector<Neuron *> *outputNeurons, std::string nucleusName);
+    float evaluateResponse(std::vector<Neuron *> *outputNeurons,std::vector<Neuron *> *nucleusNeurons);
+    long getCurrentTimestamp(void);
+    float euclideanDistance(const std::vector<float>& a, const std::vector<float>& b);
+    std::map<int, float> clusterPatterns(const std::vector<std::vector<float>> &patterns, int numClusters, int vectorLength);
 
-	std::map<long,Neuron *> firingNeurons;
+    Dendrite *findConnectingDendrite(Neuron *neuronA, Neuron *neuronB);
+    long getTotalEvents(void);
+    long getAllTotalEvents(void);
 
-	std::vector<float> softmax(const std::vector<float>& input);
-	std::pair<std::vector<Tuple*>*, std::vector<Tuple*>* > *getSpikes(long now, long interval);
-	std::pair<std::vector<Neuron *>*, std::vector<Neuron *>* > *getNeurons(long now, long interval);
+    void debug(char *str);
+    void debug(std::stringstream &ss);
 
-	char* allocClearedMemory(size_t count);
-	void freeMemory(char *ptr);
+    std::map<long,Neuron *> firingNeurons;
 
-	bool componentKeyInRange(unsigned long key);
-	bool validTimedEvent(unsigned long id);
-	bool validActionPotential(unsigned long id);
+    std::vector<float> softmax(const std::vector<float>& input);
+    std::pair<std::vector<Tuple*>*, std::vector<Tuple*>* > *getSpikes(long now, long interval);
+    std::pair<std::vector<Neuron *>*, std::vector<Neuron *>* > *getNeurons(long now, long interval);
 
-	void loadAll(void);
+    char* allocClearedMemory(size_t count);
+    void freeMemory(char *ptr);
 
-	size_t getTypeIndex(std::string  name);
+    bool componentKeyInRange(unsigned long key);
+    bool validTimedEvent(unsigned long id);
+    bool validActionPotential(unsigned long id);
 
-	// Brain
-	void insert(Brain *brain);
-	size_t brainSize(void);
+    void loadAll(void);
 
-	// Region
-	void insert(Region *region);
-	size_t regionsSize(void);
+    size_t getTypeIndex(std::string  name);
 
-	// Nucleus
-	void insert(Nucleus *nucleus);
-	size_t nucleiSize(void);
+    // Insert methods
+    void insert(Brain *brain);
+    size_t brainSize(void);
+    void insert(Region *region);
+    size_t regionsSize(void);
+    void insert(Nucleus *nucleus);
+    size_t nucleiSize(void);
+    void insert(Column *column);
+    size_t columnsSize(void);
+    void insert(Layer *layer);
+    size_t layersSize(void);
+    void insert(Cluster *cluster);
+    size_t clustersSize(void);
+    void insert(Neuron *neuron);
+    size_t neuronsSize(void);
+    void insert(Axon *axon);
+    size_t axonsSize(void);
+    void insert(Dendrite *dendrite);
+    size_t dendritesSize(void);
+    void insert(Synapse *synapse);
+    size_t synapsesSize(void);
 
-	// Column
-	void insert(Column *column);
-	size_t columnsSize(void);
+    void insert(TimedEvent *timedEvent,int intervalOffset);
 
-	// Layer
-	void insert(Layer *layer);
-	size_t layersSize(void);
+    void insertFiring(Neuron *neuron);
 
-	// Cluster
-	void insert(Cluster *cluster);
-	size_t clustersSize(void);
+    void writeSyncpoint(int sp);
+    int readSyncpoint(void);
 
-	// Neuron
-	void insert(Neuron *neuron);
-	size_t neuronsSize(void);
+    std::string getMessage(void);
+    void putMessage(std::string);
 
-	// Axon
-	void insert(Axon *axon);
-	size_t axonsSize(void);
+    void writeFireLog(std::string msg);
+    void closeFireLog(void);
+    void closeDebugLog(void);
 
-	// Dendrite
-	void insert(Dendrite *dendrite);
-	size_t dendritesSize(void);
+    void writeEventLog(std::string msg);
+    void closeEventLog(void);
 
-	// Synapse
-	void insert(Synapse *synapse);
-	size_t synapsesSize(void);
+    void writeStructureLog(std::string msg);
+    void closeStructureLog(void);
 
-	// TimedEvent
-	void insert(TimedEvent *timedEvent,int intervalOffset);
+    void logStructure(void);
+    void logStructure(Nucleus *nucleus);
 
-	void insertFiring(Neuron *neuron);
+    void writeFirePatternLog(std::string msg);
+    void closeFirePatternLog(void);
 
-	void writeSyncpoint(int sp);
-	int readSyncpoint(void);
-
-	std::string getMessage(void);
-	void putMessage(std::string);
-
-	void writeFireLog(std::string msg);
-	void closeFireLog(void);
-	void closeDebugLog(void);
-
-	void writeEventLog(std::string msg);
-	void closeEventLog(void);
-
-	void writeStructureLog(std::string msg);
-	void closeStructureLog(void);
-
-	void logStructure(void);
-	void logStructure(Nucleus *nucleus);
-
-	
 // trim from start (in place)
 	static inline std::string &ltrim(std::string& s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
@@ -296,61 +301,81 @@ public:
 		return s;
 	}
 
+    inline void incrementTimedEventsCounter(void) {
+        boost::mutex::scoped_lock amx1(timeeventscounter_mutex);
+        timeEventsCounter++;
+    }
 
-	unsigned long componentBase[CTYPE_COUNT];
-	long componentCounter[CTYPE_COUNT];
-	long componentCounter2[CTYPE_COUNT];
-	long current_timestep;
-	boost::posix_time::ptime startRealTime;
+    inline void decrementTimedEventsCounter(void) {
+        boost::mutex::scoped_lock amx1(timeeventscounter_mutex);
+        timeEventsCounter--;
+    }
 
-	std::map<long, TimedEvent*> allTimedEvents;
-	
-	std::vector<TimedEvent *> timeIntervalEvents[MAX_TIMEINTERVAL_BUFFER_SIZE];
+    inline long getTimedEventsCounter(void) {
+        boost::mutex::scoped_lock amx1(timeeventscounter_mutex);
+        return timeEventsCounter;
+    }
 
-	ComponentDB<Layer> layerDB;
-	ComponentDB<Cluster> clusterDB;
-	ComponentDB<Column> columnDB;
-	ComponentDB<Nucleus> nucleusDB;
-	ComponentDB<Region> regionDB;
-	ComponentDB<Brain> brainDB;
-	ComponentDB<Neuron> neuronDB;
-	ComponentDB<Axon> axonDB;
-	ComponentDB<Dendrite> dendriteDB;
-	ComponentDB<Synapse> synapseDB;
+    unsigned long componentBase[CTYPE_COUNT];
+    long componentCounter[CTYPE_COUNT];
+    long componentCounter2[CTYPE_COUNT];
+    long current_timestep;
+    boost::posix_time::ptime startRealTime;
 
-	std::vector<NNComponent *> deletedComponents;
+    std::map<long, TimedEvent*> allTimedEvents;
+    std::vector<TimedEvent *> timeIntervalEvents[MAX_TIMEINTERVAL_BUFFER_SIZE];
 
-	boost::asio::thread_pool *workers = NULL;
+    ComponentDB<Layer> layerDB;
+    ComponentDB<Cluster> clusterDB;
+    ComponentDB<Column> columnDB;
+    ComponentDB<Nucleus> nucleusDB;
+    ComponentDB<Region> regionDB;
+    ComponentDB<Brain> brainDB;
+    ComponentDB<Neuron> neuronDB;
+    ComponentDB<Axon> axonDB;
+    ComponentDB<Dendrite> dendriteDB;
+    ComponentDB<Synapse> synapseDB;
 
+    std::vector<NNComponent *> deletedComponents;
 
-	int syncpoint;
+    boost::asio::thread_pool *workers;
 
-	Location3D nullLocation;
+    int syncpoint;
 
-	std::ofstream *firefile = NULL;
-	std::ofstream *firelogfile = NULL;
-	std::ofstream *debugfile = NULL;
-	std::ofstream *eventlogfile = NULL;
-	std::ofstream *structurelogfile = NULL;
+    Location3D nullLocation;
 
-	bool setLogFiring = false;
-	bool keepWebserverRunning = true;
-	bool logEvents = false;
+    std::ofstream *firefile;
+    std::ofstream *firelogfile;
+    std::ofstream *debugfile;
+    std::ofstream *eventlogfile;
+    std::ofstream *structurelogfile;
+    std::ofstream *firePatternlogfile;
 
-	boost::mutex timestep_mutex;
-	boost::mutex actionpotential_mutex;
-	boost::mutex firingNeurons_mutex;
-	boost::mutex timedevents_mutex;
-	boost::mutex debug_mutex;
+    bool setLogFiring;
+    bool keepWebserverRunning;
+    bool logEvents;
 
-	std::vector <boost::mutex *> teVector_mutex;
+    boost::mutex timestep_mutex;
+    boost::mutex actionpotential_mutex;
+    boost::mutex firingNeurons_mutex;
+    boost::mutex timedevents_mutex;
+    boost::mutex debug_mutex;
+    boost::mutex firingPatterns_mutex;
+    boost::mutex stdp_mutex;
+    boost::mutex timeeventscounter_mutex;
+    boost::mutex batchfire_mutex;
 
-	boost::mutex stdp_mutex;
+    std::vector <boost::mutex *> teVector_mutex;
 
+    std::string latestOutputTarget;
+    unsigned char lastBuffer[28*28];
+    Neuron *lastFiredNeuron;
+    Brain* brain;
 
+    // New method to apply global homeostasis
+    void applyGlobalHomeostasis();
+    void applyLocalHomeostasis(std::vector<Neuron *> *neurons);
 };
 
-#ifndef noexternglobal
-#define noexternglobal 1
-#endif
+
 

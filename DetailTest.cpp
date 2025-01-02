@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -22,6 +22,7 @@
 #include "Global.h"
 #include "TR1Random.h"
 #include "DetailTest.h"
+#include "SNNEngine.h"
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
@@ -46,13 +47,13 @@ Brain * DetailTest::create(bool rebuild)
 	{
 		LOGSTREAM(ss) << " Loading brain" << std::endl;
 		globalObject->log(ss);
-		brain = Brain::load();
+		brain = Brain::load("../../../database/","DetailTest");
 	} 
 	else 
 	{
 		LOGSTREAM(ss) << " Creating brain" << std::endl;
 		globalObject->log(ss);
-		brain = Brain::create();
+		brain = Brain::create(true,"../../../database/","DetailTest");
 	}
 
 	SpatialDetails sd(2500, 2500, 2500, 5000, 5000, 5000); // Dummy test locations/size
@@ -137,8 +138,8 @@ Brain * DetailTest::create(bool rebuild)
 		{
 			Column *column2 = globalObject->columnDB.getValue(1);
 			if(column1 != column2) {
-				column1->projectTo(column2);
-				column2->projectTo(column1);
+				column1->receiveInputFrom(column2);
+				column2->receiveInputFrom(column1);
 			}
 
 		}
@@ -309,13 +310,13 @@ void DetailTest::finalAdjustments(std::stringstream &ss)
 void DetailTest::step(Brain *brain)
 {
 	(void)brain;
-//	std::cout << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
+//	std::cout << "Current timestamp " << globalObject->getCurrentTimestamp() << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 
 
 	std::stringstream ss;
 /****
 	if(globalObject->actionPotentialsSize()>0) {
-		LOGSTREAM(ss) << "Current timestamp " << globalObject->current_timestep << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
+		LOGSTREAM(ss) << "Current timestamp " << globalObject->getCurrentTimestamp() << " Current AP count " << globalObject->actionPotentialsSize() << std::endl;
 		globalObject->log(ss);
 	}
 ****/
@@ -339,9 +340,9 @@ void DetailTest::insertSynapses(Nucleus* nuc) {
 			long layerId = col->layers[j];
 			Layer *lay = globalObject->layerDB.getComponent(layerId);
 			// If inputlayer, polarity is inhibitory, otherwise excitatory
-			float polarity = EXCITATORY;
+			float polarity = EXCITATORY_SYNAPSE;
 			if(j==(size_t)col->inputLayer)
-				polarity = EXCITATORY;
+				polarity = EXCITATORY_SYNAPSE;
 
 			for (size_t k = 0; k < lay->clusters.size(); k++) {
 				long clusterId = lay->clusters[k];
@@ -405,7 +406,13 @@ Brain* DetailTest::createFromJSON(void)
 
 	LOGSTREAM(ss) << " Loading brain from JSON" << std::endl;
 	globalObject->log(ss);
-	brain = Brain::loadFromJSON();
+	brain = Brain::loadFromJSON("../../../database/","DetailTest");
 	return brain;
 }
 
+int BDetailTest_main(int argc, char *argv[])
+{
+	SNNEngine *engine = new SNNEngine();
+	engine->initialize("../../../database/","DetailTest");
+	engine->startEngine();
+}

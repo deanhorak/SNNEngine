@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -78,7 +78,7 @@ Layer *Layer::create(unsigned long parentId)
 }
 
 
-void Layer::projectTo(Layer *layer, float sparsity, float polarity)
+void Layer::receiveInputFrom(Layer *layer, float sparsity, float polarity)
 {
 	std::stringstream ss;
 //	std::cout << " Connecting layer " << id << " ... " << std::endl;
@@ -90,30 +90,35 @@ void Layer::projectTo(Layer *layer, float sparsity, float polarity)
 		for(size_t j=0;j<cSize2;j++)
 		{
 			Cluster *cTo = globalObject->clusterDB.getComponent(layer->clusters[j]);
-//			LOGSTREAM(ss) << "      Projecting cluster " << cFrom->id << " (" << cFrom->neurons.size() << " neurons) to  " << cTo->id << " (" << cTo->neurons.size() << " neurons)" << std::endl;
+//			LOGSTREAM(ss) << "      Cluster " << cFrom->id << " (" << cFrom->neurons.size() << " neurons) receiving input from   " << cTo->id << " (" << cTo->neurons.size() << " neurons)" << std::endl;
 //			globalObject->log(ss);
-			cFrom->projectTo(cTo, sparsity,polarity);
+			cFrom->receiveInputFrom(cTo, sparsity,polarity);
 		}
 	}
 }
 
-void Layer::cycle(void)
+long Layer::getStartNeuron(void)
 {
 	size_t cSize = clusters.size();
-	for(size_t i=0;i<cSize;i++)
-	{
-		Cluster  *cl = globalObject->clusterDB.getComponent(clusters[i]);
-		cl->cycle();
-	}
-/*
-	CollectionIterator<Cluster *> itCluster(&clusters);
-	for (itCluster.begin(); itCluster.more(); itCluster.next())
-	{
-		itCluster.value()->cycle();
-	}
-*/
-//	std::cout << "Layer " << this->id << " cycled." << std::endl;
+	if(cSize==0)
+		return 0;
+
+	long cId = clusters[0];
+	Cluster *cluster = globalObject->clusterDB.getComponent(cId);
+	return cluster->getStartNeuron();
 }
+
+long Layer::getEndNeuron(void)
+{
+	size_t cSize = clusters.size();
+	if(cSize==0)
+		return 0;
+
+	long cId = clusters[cSize-1];
+	Cluster *cluster = globalObject->clusterDB.getComponent(cId);
+	return cluster->getEndNeuron();
+}
+
 
 void Layer::initializeRandom(unsigned long parentId)
 {

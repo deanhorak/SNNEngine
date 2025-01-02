@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -20,12 +20,13 @@
  */
 
 #pragma once
-#include "Neuron.h"
+
+enum NeuronType { Pyramidal, Unipolar, Bipolar, Multipolar, Purkinje };
 
 class NeuronMorphology
 {
 public:
-	NeuronMorphology(NeuronType nType=Pyramidal, int cSize=100, int cCount=10);
+	NeuronMorphology(NeuronType nType=NeuronType::Pyramidal, int cSize=100, int cCount=10);
 	~NeuronMorphology(void);
 
 	NeuronType type;

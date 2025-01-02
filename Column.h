@@ -1,7 +1,7 @@
 /*
  * Proprietary License
  * 
- * Copyright (c) 2024 Dean S Horak
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
  * 
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
@@ -27,6 +27,10 @@
 #include "Size3D.h"
 #include "SpatialDetails.h"
 
+// polarity - defined here because for some reason it can't see it in Global.h
+#define EXCITATORY 1.0f
+#define INHIBITORY -1.0f
+
 class Column: public NNComponent
 {
 	Column(bool createLayers, unsigned long parentId);
@@ -43,17 +47,18 @@ class Column: public NNComponent
 	}
 public:
 	virtual ~Column(void);
-//	static Column *create(SpatialDetails details, unsigned long parentId);
 	static Column *create(SpatialDetails details, size_t layerCount, unsigned long parentId);
 	void initializeRandom(unsigned long parentId);
-//	void initializeLayers(unsigned long parentId);
 	static Column *instantiate(long key, size_t len, void *data);
 	Tuple *getImage(void);
 
-	void projectTo(Column *column, float sparsity=100.0f);
-	void cycle(void);
+	void receiveInputFrom(Column *column, float sparsity=100.0f, float polarity=EXCITATORY_SYNAPSE); 
 
 	void toJSON(std::ofstream& outstream);
+
+	long getStartNeuron(void);
+	long getEndNeuron(void);
+
 
 
 	std::vector<long> layers;

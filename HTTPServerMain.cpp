@@ -1,61 +1,34 @@
 /*
  * Proprietary License
- * 
- * Copyright (c) 2024 Dean S Horak
+ *
+ * Copyright (c) 2024-2025 Dean S Horak
  * All rights reserved.
- * 
+ *
  * This software is the confidential and proprietary information of Dean S Horak ("Proprietary Information").
  * You shall not disclose such Proprietary Information and shall use it only in accordance with the terms
  * of the license agreement you entered into with Dean S Horak.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification, are not permitted
  * without express written permission from Dean S Horak.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
  * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  * If you have any questions about this license, please contact Your Name at dean.horak@gmail.com.
  */
 
 #include "HTTPServerMain.h"
 
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <math.h>
-
-#include <cerrno>
-#include <chrono>
-#include <cstring>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <thread>
-
-#include "HTTPMessage.h"
-#include "HTTPServer.h"
-#include "uri.h"
-#include "Global.h"
-
-
-#include "nlohmann/json.hpp"
-#include <boost/algorithm/string.hpp>
-
-using simple_http_server::HttpMethod;
-using simple_http_server::HttpRequest;
-using simple_http_server::HttpResponse;
-using simple_http_server::HttpServer;
-using simple_http_server::HttpStatusCode;
 
 // Settable externs
 extern long FIRING_WINDOW;
 extern long PROPAGATION_DELAY_MICROSECONDS;
-extern float DECAY_FACTOR;
+extern double DECAY_FACTOR;
 extern long REFACTORY_PERIOD;
 extern float WEIGHT_GRADATION;
 extern float RATE_GRADATION;
-
 
 unsigned char bitmapper[8] = {128, 64, 32, 16, 8, 4, 2, 1};
 // unsigned char andbitmapper[8] = {127, 191, 223, 239, 247, 251, 253, 254};
@@ -66,6 +39,9 @@ static const std::string base64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789+/";
+
+int randomFireCount = 0;
+
 
 static inline bool is_base64(BYTE c)
 {
@@ -218,6 +194,45 @@ size_t min(size_t a, size_t b)
   return (a < b) ? a : b;
 }
 
+// Function to convert the grayscale pixel value to an ASCII character
+char pixelToAscii(unsigned char pixelValue)
+{
+  // Expanded set of ASCII characters for 50 levels of brightness
+  const char *asciiChars = " .`'^\",-~:;_+=<>i!lI?/\\|()1{}[]rctvzXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+  int numLevels = 50; // Number of levels of brightness represented by ASCII chars
+
+  // Map the pixel value (0-255) to an index in the ASCII character array (0-49)
+  int index = (pixelValue * (numLevels - 1)) / 255;
+  return asciiChars[index];
+}
+
+// Function to display the 28x28 grayscale image buffer as ASCII art
+void displayAsciiImage(unsigned char *tempBuffer)
+{
+  if (!tempBuffer)
+  {
+    std::cerr << "Error: Buffer is null." << std::endl;
+    return;
+  }
+
+  std::stringstream pattern;
+  for (int row = 0; row < 28; ++row)
+  {
+    for (int col = 0; col < 28; ++col)
+    {
+      // Get the pixel value from the buffer
+      unsigned char pixelValue = tempBuffer[row * 28 + col];
+      // Convert the pixel value to an ASCII character and print it
+      pattern << pixelToAscii(pixelValue);
+    }
+    // Move to the next line after printing each row
+    pattern << std::endl;
+  }
+
+  globalObject->lastImageString = pattern.str().c_str();
+  globalObject->writeFirePatternLog(globalObject->lastImageString);
+}
+
 std::string parseAndRespond(std::string content)
 {
   (void)content;
@@ -241,7 +256,7 @@ std::string parseAndRespond(std::string content)
 
   for (size_t i = 0; i < MAX_TIMEINTERVAL_BUFFER_SIZE; i++)
   {
-    size_t intervalOffsetValue = (globalObject->current_timestep + i) % MAX_TIMEINTERVAL_BUFFER_SIZE;
+    size_t intervalOffsetValue = (globalObject->getCurrentTimestamp() + i) % MAX_TIMEINTERVAL_BUFFER_SIZE;
     std::vector<TimedEvent *> *teVector = &globalObject->timeIntervalEvents[intervalOffsetValue];
     long sz = teVector->size();
 
@@ -332,10 +347,36 @@ std::string parseAndRespondJSON(std::string content)
       // printf("%s\n",returnString.c_str());
       return returnString;
     }
+    else if (boost::iequals(command, "LOGRESPONSEON"))
+    {
+      //
+      globalObject->closeEventLog();
+      globalObject->logResponseMode = true;
+      returnCode = 0;
+      returnMessage = "LOGRESPONSE ON ";
+
+      std::string returnString("");
+      returnString += "\", \"Returncode\": \"" + std::to_string(returnCode) + "\", \"ReturnMessage\": \"" + returnMessage + "\" }";
+      // printf("%s\n",returnString.c_str());
+      return returnString;
+    }
+    else if (boost::iequals(command, "LOGRESPONSEOFF"))
+    {
+      //
+      globalObject->closeEventLog();
+      globalObject->logResponseMode = false;
+      returnCode = 0;
+      returnMessage = "LOGRESPONSE OFF ";
+
+      std::string returnString("");
+      returnString += "\", \"Returncode\": \"" + std::to_string(returnCode) + "\", \"ReturnMessage\": \"" + returnMessage + "\" }";
+      // printf("%s\n",returnString.c_str());
+      return returnString;
+    }
     else if (boost::iequals(command, "GETTESTRESPONSE"))
     {
 
-      globalObject->logResponseMode = false;
+      // globalObject->logResponseMode = true;
 
       auto nuclei = jsonObject["nuclei"];
       if (nuclei.is_array())
@@ -348,12 +389,16 @@ std::string parseAndRespondJSON(std::string content)
 
         std::string outputNucleus = outputElement["nucleusout"];
 
-
         std::vector<long> neurons = Server::getNeurons(inputNucleus, LayerType::input); // Layer 1 = input
         size_t totalSize = neurons.size();
 
         size_t tempBufferSize = 0;
         unsigned char *tempBuffer = base64_decode(inputPattern, &tempBufferSize);
+
+        if(tempBufferSize == (28*28)) {
+          displayAsciiImage(tempBuffer);
+          memcpy(globalObject->lastBuffer,tempBuffer,28*28);
+        }
 
         size_t numbits = min(totalSize, tempBufferSize * 8);
 
@@ -377,35 +422,39 @@ std::string parseAndRespondJSON(std::string content)
           }
         }
 
-        //std::string thispattern = bitsToString(tempBuffer, numbits);
-//        std::string thispattern = convertToBinaryString(tempBuffer, tempBufferSize);
+        // std::string thispattern = bitsToString(tempBuffer, numbits);
+        //        std::string thispattern = convertToBinaryString(tempBuffer, tempBufferSize);
 
-//        std::cout << inputNucleus << " pattern: " << thispattern << std::endl;
+        //        std::cout << inputNucleus << " pattern: " << thispattern << std::endl;
 
         //
         free(tempBuffer);
 
-        long startTimer = globalObject->current_timestep;
-        long lowestOffset = globalObject->batchFire(&firingNeurons);
+        long defaultWait = 1020;
+        Range offset = globalObject->batchFire(&firingNeurons, defaultWait);
+        long lowestOffset = offset.low;
+        long highestOffset = offset.high;
+        long startTimer = globalObject->getCurrentTimestamp();
 
-        long delay =PROPAGATION_DELAY_MICROSECONDS;
-        if(lowestOffset < delay && lowestOffset > 0) 
-          delay = lowestOffset;
+        long delay = PROPAGATION_DELAY_MICROSECONDS;
+        if (highestOffset < delay && highestOffset > 0)
+          delay = highestOffset;
 
-        if(delay>MAX_TIMEINTERVAL_OFFSET)
-            delay = MAX_TIMEINTERVAL_OFFSET;
+        if (delay > MAX_TIMEINTERVAL_OFFSET)
+          delay = MAX_TIMEINTERVAL_OFFSET;
 
         long endTimer = startTimer + delay + PROPAGATION_DELAY_MICROSECONDS;
         // globalObject->cycleNeurons(); // cycle through all neurons a if potiential > threshold, fire the neurons
 
-        while(globalObject->current_timestep < endTimer) 
-        { 
-//          std::cout << "delay current: " << globalObject->current_timestep << ", till: " << endTimer << std::endl; 
-          usleep(10); // 20ms delay to allow for ap propagation
-        }
-
+        /*
+                while(globalObject->getCurrentTimestamp() < endTimer)
+                {
+        //          std::cout << "delay current: " << glofiringNeuronsbalObject->getCurrentTimestamp() << ", till: " << endTimer << std::endl;
+                  usleep(10); // 20ms delay to allow for ap propagation
+                }
+        */
         // we have fired the stimulus. Lets give a few ms to allow the APs to propagate.
-        // usleep(5); // 5ms which is half the refactor period
+         //usleep(delay + PROPAGATION_DELAY_MICROSECONDS); // 5ms which is half the refactor period
 
         // Now lets return the results from the output neurons
 
@@ -425,65 +474,76 @@ std::string parseAndRespondJSON(std::string content)
         neurons = Server::getNeurons(nucleus, LayerType::output); //  output
         totalSize = neurons.size();
 
+        tempBufferSize = totalSize / 8 + 1;
+
+        tempBuffer = (unsigned char *)calloc(1, tempBufferSize);
+
+
+        // wait for the first neuron firing, or 
+        long endTime = startTimer+ delay + PROPAGATION_DELAY_MICROSECONDS;
+        bool didFire = false;
+        long ct = globalObject->getCurrentTimestamp();
+        // wait for a response
+        endTime +=25; // wait max of 0.025 seconds times as longer than expected
+        bool done=false;
+        while (!done)
+        {
+          for (size_t i = 0; i < totalSize; i++)
+          {
+            if(!didFire)
+            {
+              ct = globalObject->getCurrentTimestamp();
+              long neuronId = neurons[i];
+              Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
+              if (neuron->isFiring(FIRING_WINDOW))
+              {
+//                std::cout << "Neuron " << neuron->id << " firing after " << (ct - startTimer) << "ms" << std::endl;
+                didFire = true;
+              }
+            }
+            else
+            {
+              break;
+            }
+          }
+          if(ct >= endTime || didFire)
+            done = true;
+          else 
+            usleep(25);
+        }
+/*
+        if(!didFire) {
+          long ct = globalObject->getCurrentTimestamp();
+          std::cout << "Giving up waiting on firing after " << (ct - startTimer) << "ms" << std::endl;
+          std::cout << "StarTimer: " << startTimer << "ms" << " Current Time:" << ct << " EndTime: " << endTime << std::endl;
+        }
+*/
 
         for (size_t i = 0; i < totalSize; i++)
         {
           long neuronId = neurons[i];
           Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
-          if(highestWeight < neuron->potential)
-            {
-              highestWeight = neuron->potential;
-              highestNeuron = neuron;
-            }
-        }
+          int byteindex = i / 8;
+          int bitindex = i % 8; // get the modulus
 
-
-        tempBufferSize = totalSize / 8 + 1;
-
-        tempBuffer = (unsigned char *)calloc(1, tempBufferSize);
-
-        if (highestNeuron != NULL) // If there is a highest potentialed neuron, use it
-        {
-          long highestNeuronId = (long)highestNeuron->id;
-          for (size_t i = 0; i < totalSize; i++)
+          if (neuron != NULL)
           {
-            int byteindex = i / 8;
-            int bitindex = i % 8; // get the modulus
-
-            if (neurons[i]==highestNeuronId) // If we're the highest potential pic just me
+            if (neuron->isFiring(FIRING_WINDOW)) // Allow for a 10 ms window to be considered "firing"
             {
               totalFirings++;
               tempBuffer[byteindex] = tempBuffer[byteindex] | bitmapper[bitindex];
             }
           }
         }
-        else  // If there is no highest potentialed neuron, return all firing neurons
-        {
-          for (size_t i = 0; i < totalSize; i++)
-          {
-            long neuronId = neurons[i];
-            Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
-            int byteindex = i / 8;
-            int bitindex = i % 8; // get the modulus
-
-            if (neuron != NULL)
-            {
-              if (neuron->isFiring(FIRING_WINDOW)) // Allow for a 10 ms window to be considered "firing"
-              {
-                totalFirings++;
-                tempBuffer[byteindex] = tempBuffer[byteindex] | bitmapper[bitindex];
-              }
-            }
-          }
-        }
+        //        }
         // tempBuffer now contains the activations in binary (on bit indicates neuron is firing)
 
         // printf("Response: %s\n",convertBitmapToString(tempBuffer,totalSize).c_str());
         // convert the buffer into a base64 string
 
-        //thispattern = bitsToString(tempBuffer, totalSize);
+        // thispattern = bitsToString(tempBuffer, totalSize);
 
-        //std::cout << outputNucleus << " pattern: " << thispattern << std::endl;
+        // std::cout << outputNucleus << " pattern: " << thispattern << std::endl;
 
         std::string encoded = base64_encode(tempBuffer, tempBufferSize);
         // release the tempbuffer
@@ -498,8 +558,8 @@ std::string parseAndRespondJSON(std::string content)
         returnCode = 0;
         returnMessage = st.str();
 
-//        if (totalFirings > 0)
-//          printf("Total Firings = %d\n", totalFirings);
+        //        if (totalFirings > 0)
+        //          printf("Total Firings = %d\n", totalFirings);
 
         std::string returnString("{ \"pattern\": \"");
         returnString += encoded;
@@ -529,6 +589,7 @@ std::string parseAndRespondJSON(std::string content)
       std::vector<Neuron *> firingNeurons;
       std::vector<Neuron *> inputFiringNeurons;
       std::vector<Neuron *> outputFiringNeurons;
+      std::string nucleusName;
 
       // bool firing = false;
       //       while (!firing && retryCount < 100)
@@ -544,12 +605,17 @@ std::string parseAndRespondJSON(std::string content)
         {
 
           std::string nucleus = element["nucleus"];
+          nucleusName = nucleus;
 
           // printf("processing nucleus %s\n", nucleus.c_str());
 
           std::string pattern = element["pattern"];
 
-          std::vector<long> neurons = Server::getNeurons(nucleus, LayerType::input); // Layer 1 = input
+          std::vector<long> neurons;
+          if (nucleusIndex == 0)
+            neurons = Server::getNeurons(nucleus, LayerType::input); // Layer input
+          else
+            neurons = Server::getNeurons(nucleus, LayerType::output); // Layer output
 
           size_t totalSize = neurons.size();
 
@@ -558,11 +624,17 @@ std::string parseAndRespondJSON(std::string content)
 
           size_t numbits = min(totalSize, tempBufferSize * 8);
 
-//          std::string thispattern = bitsToString(tempBuffer, numbits);
+          if (nucleusIndex == 0) {
+            displayAsciiImage(tempBuffer);
+            memcpy(globalObject->lastBuffer,tempBuffer,28*28);
+          }
 
-//          std::cout << nucleus << " pattern: " << thispattern << std::endl;
+          //          std::string thispattern = bitsToString(tempBuffer, numbits);
+
+          //          std::cout << nucleus << " pattern: " << thispattern << std::endl;
 
           // We now have the vector of neurons to update and the bit pattern to update them with
+          std::string outString;
           for (int i = 0; i < (int)numbits; i++)
           {
             int byteindex = i / 8;
@@ -577,12 +649,26 @@ std::string parseAndRespondJSON(std::string content)
             { // Turn on firing
               firingNeurons.push_back(neuron);
 
-              if (nucleusIndex == 0)
+              if (nucleusIndex == 0) // input
+              {
                 inputFiringNeurons.push_back(neuron);
+              }
               else
+              { // output
+                outString += "1";
                 outputFiringNeurons.push_back(neuron);
+              }
+            }
+            else
+            {
+              if (nucleusIndex != 0) // input
+              {
+                outString += "0";
+              }
             }
           }
+
+          globalObject->latestOutputTarget = outString;
 
           //
           free(tempBuffer);
@@ -606,38 +692,93 @@ std::string parseAndRespondJSON(std::string content)
               Dendrite *outDendrite = globalObject->findConnectingDendrite(out, in);
               if (outDendrite == NULL)
               {
-                out->connectFrom(in,INHIBITORY);
+                out->connectFrom(in, INHIBITORY);
               }
 
               Dendrite *inDendrite = globalObject->findConnectingDendrite(in, out);
               if (inDendrite == NULL)
               {
-                out->connectTo(in,INHIBITORY); // default to inhibitory
+                out->connectTo(in, INHIBITORY); // default to inhibitory
               }
             }
           }
         }
 
-        long startTimer = globalObject->current_timestep;
-        long lowestOffset = globalObject->batchFire(&firingNeurons);
+        // As a test, lets fire random association cortex neurons.
 
-        long delay =PROPAGATION_DELAY_MICROSECONDS;
-        if(lowestOffset < delay && lowestOffset > 0) 
-          delay = lowestOffset;
-        
-        if(delay>MAX_TIMEINTERVAL_OFFSET)
-            delay = MAX_TIMEINTERVAL_OFFSET;
+        if (randomFireCount < 25)
+        {
+          TR1Random tr1random;
+          int rnd1 = tr1random.generate(1, 100);
 
-        long endTimer = startTimer + delay + PROPAGATION_DELAY_MICROSECONDS;
-        // globalObject->cycleNeurons(); // cycle through all neurons a if potiential > threshold, fire the neurons
+          if (rnd1 > 75)
+          {
 
-        while(globalObject->current_timestep < endTimer) 
-        { 
-//          std::cout << "delay current: " << globalObject->current_timestep << ", till: " << endTimer << std::endl; 
-          usleep(10); // 20ms delay to allow for ap propagation
+            std::vector<long> associationNeurons = Server::getNeurons("nucleusAssociative", LayerType::input); // Layer input
+
+            for (size_t ix = 0; ix < associationNeurons.size(); ix++)
+            {
+              int rnd2 = tr1random.generate(1, 100);
+
+              bool selected = (rnd2 > 75);
+              if (selected)
+              {
+                long neuronId = associationNeurons[ix];
+                Neuron *neuron = globalObject->neuronDB.getComponent(neuronId);
+                inputFiringNeurons.push_back(neuron);
+              }
+            }
+            randomFireCount++;
+          }
         }
 
+        long delay = PROPAGATION_DELAY_MICROSECONDS;
+        long startTimer = globalObject->getCurrentTimestamp();
+        long endTimer = startTimer + delay + PROPAGATION_DELAY_MICROSECONDS;
 
+          Range offset = globalObject->batchLearn(&inputFiringNeurons, &outputFiringNeurons, nucleusName);
+          long lowestOffset = offset.low;
+          long highestOffset = offset.high;
+          startTimer = globalObject->getCurrentTimestamp();
+
+          //std::cout << "batchLearn Range: " << offset.low << " - " << offset.high << std::endl;
+
+          delay = PROPAGATION_DELAY_MICROSECONDS;
+          if (highestOffset < delay && highestOffset > 0)
+            delay = highestOffset;
+
+          if (delay > MAX_TIMEINTERVAL_OFFSET)
+            delay = MAX_TIMEINTERVAL_OFFSET;
+
+          endTimer = startTimer + delay + PROPAGATION_DELAY_MICROSECONDS + REFACTORY_PERIOD; 
+          // globalObject->cycleNeurons(); // cycle through all neurons a if potiential > threshold, fire the neurons
+//          while (globalObject->getAllTotalEvents() > 0)
+//          {
+//            usleep(250); // 0.25 seconds
+//          }
+        long ct = globalObject->getCurrentTimestamp();
+        while(ct < endTimer)
+        {
+          usleep(25);
+          ct = globalObject->getCurrentTimestamp();
+        }
+/*        
+        int max_loop_count = 60;
+        long loopcount = 0;
+        long totalEvents = globalObject->getTotalEvents();
+        while (totalEvents > 0 && loopcount < max_loop_count) // If more than MAX_ACTIVE_ACTIONPOTENTIALS events in progress - slow it down
+        {
+          std::cout << "delay current: " << globalObject->getCurrentTimestamp() << ", retry: " << loopcount + 1 << " of " << max_loop_count << " tries." << std::endl;
+          sleep(1); // 1 sec delay to allow for ap propagation
+          totalEvents = globalObject->getTotalEvents();
+          loopcount++;
+        }
+
+*/        
+        // proceed anyway and hope they die down.... may need some logic to kill
+        std::stringstream ss;
+        ss << "complete for - " << globalObject->latestOutputTarget << std::endl;
+        globalObject->writeFirePatternLog(ss.str().c_str());
       }
       else
       {
@@ -647,6 +788,25 @@ std::string parseAndRespondJSON(std::string content)
         // printf("%s\n",returnString.c_str());
         return returnString;
       }
+/*      
+      // wait until the input neurons stop firing
+      bool done = false;
+      size_t infNeuronsCount = inputFiringNeurons.size();
+      while(~done)
+      {
+        done = true;
+        for(size_t i=0;i<infNeuronsCount;i++)
+        {
+          Neuron* n = inputFiringNeurons[i];
+          if(n->isFiring())
+          {
+//            std::cout << "Neuron : " << n->id << " still firing" << std::endl;
+            done = false;
+          }
+        }
+        usleep(10);
+      }
+*/
 
       returnCode = 0;
       returnMessage = "SUCCESS";
@@ -726,33 +886,33 @@ std::string parseAndRespondJSON(std::string content)
     else if (boost::iequals(command, "SETVALUE"))
     {
       //
-/*
+      /*
 
-// The variables below can be changed on the fly via the SETVALUE rest interface command
-// example JSON format is { "command": "SETVALUE", "name": "FIRING_WINDOW", "value": 10 }
+      // The variables below can be changed on the fly via the SETVALUE rest interface command
+      // example JSON format is { "command": "SETVALUE", "name": "FIRING_WINDOW", "value": 10 }
 
-// set initial FIRING WINDOW to slightly longer than refactory period
-//#define FIRING_WINDOW 10
-long FIRING_WINDOW = 10;
+      // set initial FIRING WINDOW to slightly longer than refactory period
+      //#define FIRING_WINDOW 10
+      long FIRING_WINDOW = 10;
 
-//#define PROPAGATION_DELAY_MICROSECONDS 20
-long PROPAGATION_DELAY_MICROSECONDS = 20;
+      //#define PROPAGATION_DELAY_MICROSECONDS 20
+      long PROPAGATION_DELAY_MICROSECONDS = 20;
 
-//#define DECAY_FACTOR  0.01f
-float DECAY_FACTOR = 0.01f;
+      //#define DECAY_FACTOR  0.01f
+      //float DECAY_FACTOR = 0.01f;
 
-long REFACTORY_PERIOD = 10;
+      //long REFACTORY_PERIOD = 10;
 
-// WEIGHT_GRADATION is used to slow the rate of change for weight over time (defined by n updates)
-//#define WEIGHT_GRADATION 10000.0f
-float WEIGHT_GRADATION = 10000.0f;
+      // WEIGHT_GRADATION is used to slow the rate of change for weight over time (defined by n updates)
+      //#define WEIGHT_GRADATION 10000.0f
+      float WEIGHT_GRADATION = 10000.0f;
 
-// RATE_GRADATION is used to slow the rate of change for rate over time (defined by n updates)
-//#define RATE_GRADATION 10000.0f
-float RATE_GRADATION = 10000.0f;
+      // RATE_GRADATION is used to slow the rate of change for rate over time (defined by n updates)
+      //#define RATE_GRADATION 10000.0f
+      float RATE_GRADATION = 10000.0f;
 
 
-*/
+      */
       //
       std::string key = jsonObject["name"];
 
@@ -791,8 +951,7 @@ float RATE_GRADATION = 10000.0f;
         return returnString;
       }
 
-      printf("SETVALUE name:%s, value:%s successfully set.\n",key.c_str(), value.c_str());
-
+      printf("SETVALUE name:%s, value:%s successfully set.\n", key.c_str(), value.c_str());
 
       returnCode = 0;
       returnMessage = "SUCCESS";
@@ -803,12 +962,12 @@ float RATE_GRADATION = 10000.0f;
     else if (boost::iequals(command, "GETVALUE"))
     {
       //
-/*
+      /*
 
-// The variables below can be retrieved on the fly via the GETVALUE rest interface command
-// example JSON format is { "command": "GETVALUE", "name": "FIRING_WINDOW" }
+      // The variables below can be retrieved on the fly via the GETVALUE rest interface command
+      // example JSON format is { "command": "GETVALUE", "name": "FIRING_WINDOW" }
 
-*/
+      */
       //
       std::string key = jsonObject["name"];
 
@@ -847,8 +1006,7 @@ float RATE_GRADATION = 10000.0f;
         return returnString;
       }
 
-      printf("GETVALUE name:%s, value:%s \n",key.c_str(), value.c_str());
-
+      printf("GETVALUE name:%s, value:%s \n", key.c_str(), value.c_str());
 
       returnCode = 0;
       returnMessage = "SUCCESS";
@@ -874,10 +1032,15 @@ float RATE_GRADATION = 10000.0f;
       std::cout << "STAT command received" << std::endl;
       std::string resp = "";
       std::string sep = "";
-      for (int i = 0; i < FIRING_WINDOW*2; i++)
+
+      std::stringstream s1;
+      s1 << "Total Events :" << globalObject->getAllTotalEvents() << std::endl;
+      resp = s1.str();
+
+      for (int i = 0; i < FIRING_WINDOW * 2; i++)
       {
         std::stringstream ss;
-        long thistimestamp = (globalObject->current_timestep - FIRING_WINDOW) + i; //
+        long thistimestamp = (globalObject->getCurrentTimestamp() - FIRING_WINDOW) + i; //
         long thisindex = thistimestamp % MAX_TIMEINTERVAL_BUFFER_SIZE;
         long count = globalObject->timeIntervalEvents[thisindex].size();
         ss << sep << (i - FIRING_WINDOW) << ":" << count;
@@ -919,24 +1082,53 @@ float RATE_GRADATION = 10000.0f;
 
     return responseContent;
   }
-  
-  std::string emptyresponseContent; 
+
+  std::string emptyresponseContent;
   return emptyresponseContent;
 }
 
 std::string computeResponse(std::string content)
 {
+  long max_allowed = MAX_ACTIVE_ACTIONPOTENTIALS;
+  //  long max_allowed = 100;
 
-  if (globalObject->getTotalEvents() > MAX_ACTIVE_ACTIONPOTENTIALS) // If more than MAX_ACTIVE_ACTIONPOTENTIALS events in progress - slow it down
+  if (globalObject->getTotalEvents() > (long)(max_allowed)) // If more than MAX_ACTIVE_ACTIONPOTENTIALS events in progress - slow it down
   {
-    std::cout << "computeResponse: More than "<< MAX_ACTIVE_ACTIONPOTENTIALS << " million events in progress. Slow it down." << std::endl;
-    while (globalObject->getTotalEvents() > MAX_ACTIVE_ACTIONPOTENTIALS)
-    {
+    std::cout << "computeResponse: More than " << max_allowed << "  events in progress. Slow it down." << std::endl;
+    std::cout << std::endl;
 
+    long currentTotalEvents = globalObject->getTotalEvents();
+    long previousTotalEvents = currentTotalEvents;
+
+    bool keepWaiting = true;
+    constexpr int MAX_UNCHANGED=100;
+    int unchangedCount=0;
+
+    while (currentTotalEvents > (long)(max_allowed) && keepWaiting)
+    {
       sleep(5); // sleep for 5 seconds
-    std::cout << "computeResponse: Current event count is " << globalObject->getTotalEvents() << ". " << std::endl;
+      previousTotalEvents = currentTotalEvents;
+      currentTotalEvents = globalObject->getTotalEvents();
+      if (currentTotalEvents < previousTotalEvents)
+      {
+        std::cout << "computeResponse: Current event count is " << currentTotalEvents << ", down from " << previousTotalEvents << " by " << previousTotalEvents - currentTotalEvents << ".      \r";
+        unchangedCount=0;
+      }
+      else if (currentTotalEvents > previousTotalEvents)
+      {
+        std::cout << "computeResponse: Current event count is " << currentTotalEvents << ", up from " << previousTotalEvents << " by " << currentTotalEvents - previousTotalEvents << ".        \r";
+        unchangedCount=0;
+      }
+      else
+      {
+        std::cout << "computeResponse: Current event count is " << currentTotalEvents << ", unchanged from previous count.                                                                      \r";
+        unchangedCount++;
+        if(unchangedCount>MAX_UNCHANGED)
+          keepWaiting = false;
+      }
     }
-    std::cout << "computeResponse: Continuing." << std::endl;
+    std::cout << std::endl
+              << "computeResponse: Continuing." << std::endl;
   }
 
   std::string responseContent = parseAndRespondJSON(content);
@@ -955,7 +1147,7 @@ extern int main_process(Brain *brain)
 
   (void)brain;
   pid_t tid = syscall(SYS_gettid);
-  std::cout << "httpServerMain.main_process thread is " << tid << std::endl;
+//  std::cout << "httpServerMain.main_process thread is " << tid << std::endl;
 
   std::string host = "0.0.0.0";
   int port = 8124;
@@ -977,8 +1169,15 @@ extern int main_process(Brain *brain)
     HttpResponse response(HttpStatusCode::Created);
     response.SetHeader("Content-Type", "application/json");
     // Compute response
+
+    pid_t tid = syscall(SYS_gettid);
+//    std::cout << "httpServerMain.response thread " << tid << " starting." << std::endl;
+
     std::string content = computeResponse(request.content());
     response.SetContent(content);
+
+    long totalEvents = globalObject->getTotalEvents();
+//    std::cout << "httpServerMain.response thread " << tid << " ending with " << totalEvents << " events remaining. Global Counter: " << globalObject->getTimedEventsCounter() << std::endl;
     return response;
   };
 
@@ -1018,6 +1217,8 @@ extern int main_process(Brain *brain)
   //  server.RegisterHttpRequestHandler("/hello.html", HttpMethod::GET, send_html);
   server.RegisterHttpRequestHandler("/api/data", HttpMethod::POST, say_json);
   server.RegisterHttpRequestHandler("/status", HttpMethod::GET, send_status);
+  server.RegisterHttpRequestHandler("/networkStatus.json", HttpMethod::GET, show_network_status);
+  server.RegisterHttpRequestHandler("/networkView",       HttpMethod::GET, show_network_view);
 
   try
   {
@@ -1050,22 +1251,214 @@ extern int main_process(Brain *brain)
   return 0;
 }
 
-std::string convertToBinaryString(unsigned char* data, size_t size)
+std::string convertToBinaryString(unsigned char *data, size_t size)
 {
-	std::string returnString;
+  std::string returnString;
 
-	for (int i = 0; i < (int)size; i++) {
-		int byteindex = i / 8;
-		int bitindex = i % 8;
+  for (int i = 0; i < (int)size; i++)
+  {
+    int byteindex = i / 8;
+    int bitindex = i % 8;
 
-		unsigned char value = data[byteindex] & bitmapper[bitindex];
-		if (value == '\0') {
-			returnString += "0";
-		}
-		else {
-			returnString += "1";
-		}
-	}
+    unsigned char value = data[byteindex] & bitmapper[bitindex];
+    if (value == '\0')
+    {
+      returnString += "0";
+    }
+    else
+    {
+      returnString += "1";
+    }
+  }
 
-	return returnString;
+  return returnString;
 }
+
+std::vector<long> getAllComponentIds(void)
+{
+  std::vector<long> neurons;
+  long neuronIdStart = globalObject->componentBase[ComponentTypeNeuron];
+	long neuronIdEnd = globalObject->componentCounter[ComponentTypeNeuron];
+  for(long n=neuronIdStart; n<neuronIdEnd;n++)
+  {
+    neurons.push_back(n);
+	}
+  return neurons;
+}
+
+HttpResponse show_network_status(const HttpRequest &request)
+{
+    HttpResponse response(HttpStatusCode::Ok);
+    response.SetHeader("Content-Type", "application/json");
+
+    // We'll build a JSON structure using nlohmann::json
+    nlohmann::json networkJson;
+    networkJson["neurons"] = nlohmann::json::array();
+    networkJson["links"]   = nlohmann::json::array();
+
+    // 1) Gather the neurons
+    //    Adjust this to however you retrieve your neuron IDs.
+    //    For example: auto neuronIds = globalObject->neuronDB.getAllComponentIds();
+    std::vector<long>  neuronIds = getAllComponentIds();
+
+    // We'll map neuronId -> index so we can reference them in "links"
+    std::unordered_map<long, size_t> neuronIndexMap;
+    size_t index = 0;
+
+    for (auto &nid : neuronIds)
+    {
+        Neuron* n = globalObject->neuronDB.getComponent(nid);
+        if (!n) continue;
+
+        // Build a JSON object for each neuron
+        nlohmann::json neuronJson;
+        neuronJson["id"]        = (long)n->id;
+        neuronJson["threshold"] = n->threshold;
+        neuronJson["potential"] = n->getMembranePotential();
+        neuronJson["firing"]    = n->isFiring() ? true : false;
+
+        // Optionally include location
+        neuronJson["x"] = n->location.x;
+        neuronJson["y"] = n->location.y;
+        neuronJson["z"] = n->location.z;
+
+        networkJson["neurons"].push_back(neuronJson);
+
+        // Store the index
+        neuronIndexMap[n->id] = index++;
+    }
+
+    // 2) Gather synapse connections as "links"
+    //    For each neuron, we look at its dendrites and retrieve the synapse info
+    for (auto &nid : neuronIds)
+    {
+        Neuron* postNeuron = globalObject->neuronDB.getComponent(nid);
+        if (!postNeuron) continue;
+
+        auto& dendrites = *(postNeuron->getDendrites());
+        for (auto dId : dendrites)
+        {
+            Dendrite* d = globalObject->dendriteDB.getComponent(dId);
+            if (!d) continue;
+
+            long preId = d->getPreSynapticNeuronId();
+            Synapse* s = globalObject->synapseDB.getComponent(d->getSynapseId());
+            if (!s) continue;
+
+            // Build a JSON link
+            nlohmann::json linkJson;
+            linkJson["source"]   = (long)preId;          // actual neuron ID
+            linkJson["target"]   = (long)postNeuron->id; // actual neuron ID
+            linkJson["weight"]   = s->getWeight();
+            linkJson["polarity"] = s->getPolarity();
+
+            // For force-directed or zero-based indexing, you can also store the index:
+            linkJson["sourceIdx"] = (long)neuronIndexMap[preId];
+            linkJson["targetIdx"] = (long)neuronIndexMap[postNeuron->id];
+
+            networkJson["links"].push_back(linkJson);
+        }
+    }
+
+    // Convert to string
+    std::string jsonString = networkJson.dump();
+    response.SetContent(jsonString);
+
+    return response;
+};
+
+HttpResponse show_network_view(const HttpRequest &request)
+
+{
+    HttpResponse response(HttpStatusCode::Ok);
+    response.SetHeader("Content-Type", "text/html");
+
+    // This HTML includes embedded JavaScript (D3.js) which
+    // fetches /networkStatus.json and displays a force-directed graph.
+    // Feel free to customize styling and behavior.
+    std::stringstream ss;
+    ss << "<!DOCTYPE html>\n"
+       << "<html>\n"
+       << "<head>\n"
+       << "  <meta charset='utf-8'>\n"
+       << "  <title>SNN Network Visualization</title>\n"
+       << "  <script src='https://d3js.org/d3.v7.min.js'></script>\n"
+       << "  <style>\n"
+       << "    .link { stroke: #999; stroke-opacity: 0.6; }\n"
+       << "    .node { stroke: #fff; stroke-width: 1.5px; cursor: pointer; }\n"
+       << "    .node.firing { fill: red; }\n"
+       << "    .node.notfiring { fill: steelblue; }\n"
+       << "    text { font-family: sans-serif; font-size: 12px; }\n"
+       << "  </style>\n"
+       << "</head>\n"
+       << "<body>\n"
+       << "  <h1>SNN Network Visualization</h1>\n"
+       << "  <div id='chart'></div>\n"
+       << "  <script>\n"
+       << "    const width = 800, height = 600;\n"
+       << "    const svg = d3.select('#chart').append('svg')\n"
+       << "        .attr('width', width)\n"
+       << "        .attr('height', height);\n"
+       << "\n"
+       << "    d3.json('/networkStatus.json').then(function(data) {\n"
+       << "      const nodes = data.neurons;\n"
+       << "      const links = data.links;\n"
+       << "\n"
+       << "      const simulation = d3.forceSimulation(nodes)\n"
+       << "        .force('link', d3.forceLink(links).id(d => d.id))\n"
+       << "        .force('charge', d3.forceManyBody().strength(-30))\n"
+       << "        .force('center', d3.forceCenter(width / 2, height / 2));\n"
+       << "\n"
+       << "      const link = svg.selectAll('.link')\n"
+       << "        .data(links)\n"
+       << "        .enter().append('line')\n"
+       << "        .attr('class', 'link')\n"
+       << "        .style('stroke-width', d => Math.max(1, d.weight * 2));\n"
+       << "\n"
+       << "      const node = svg.selectAll('.node')\n"
+       << "        .data(nodes)\n"
+       << "        .enter().append('circle')\n"
+       << "        .attr('class', d => 'node ' + (d.firing ? 'firing' : 'notfiring'))\n"
+       << "        .attr('r', 8)\n"
+       << "        .call(d3.drag()\n"
+       << "          .on('start', dragstarted)\n"
+       << "          .on('drag', dragged)\n"
+       << "          .on('end', dragended));\n"
+       << "\n"
+       << "      node.append('title')\n"
+       << "        .text(d => `Neuron: ${d.id}\\nThreshold: ${d.threshold}\\nPotential: ${d.potential}`);\n"
+       << "\n"
+       << "      simulation.on('tick', () => {\n"
+       << "        link\n"
+       << "          .attr('x1', d => d.source.x)\n"
+       << "          .attr('y1', d => d.source.y)\n"
+       << "          .attr('x2', d => d.target.x)\n"
+       << "          .attr('y2', d => d.target.y);\n"
+       << "\n"
+       << "        node\n"
+       << "          .attr('cx', d => d.x)\n"
+       << "          .attr('cy', d => d.y);\n"
+       << "      });\n"
+       << "\n"
+       << "      function dragstarted(event, d) {\n"
+       << "        if (!event.active) simulation.alphaTarget(0.3).restart();\n"
+       << "        d.fx = d.x;\n"
+       << "        d.fy = d.y;\n"
+       << "      }\n"
+       << "      function dragged(event, d) {\n"
+       << "        d.fx = event.x;\n"
+       << "        d.fy = event.y;\n"
+       << "      }\n"
+       << "      function dragended(event, d) {\n"
+       << "        if (!event.active) simulation.alphaTarget(0);\n"
+       << "        d.fx = null;\n"
+       << "        d.fy = null;\n"
+       << "      }\n"
+       << "    });\n"
+       << "  </script>\n"
+       << "</body>\n"
+       << "</html>\n";
+
+    response.SetContent(ss.str());
+    return response;
+};
